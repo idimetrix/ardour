@@ -142,6 +142,9 @@ TransportBar::TransportBar ()
 	ssbox->pack_start (*shuttle_box.vari_button(), false, false, 0);
 	ssbox->pack_start (*shuttle_box.info_button(), false, false, 0);
 
+	punch_label.set_text (_("Punch:"));
+	layered_label.set_text (_("Rec:"));
+
 	int vpadding = 1;
 	int hpadding = 2;
 	int col = 0;
@@ -149,6 +152,13 @@ TransportBar::TransportBar ()
 
 	transport_table.attach (transport_ctrl, TCOL, 0, 1 , SHRINK, SHRINK, 0, 0);
 	transport_table.attach (*ssbox,         TCOL, 1, 2 , FILL,   SHRINK, 0, 0);
+	++col;
+
+	transport_table.attach (*(manage (new ArdourVSpacer ())), TCOL, 0, 2 , SHRINK, EXPAND|FILL, 3, 0);
+	++col;
+
+	transport_table.attach (punch_label, TCOL, 0, 1 , FILL, SHRINK, 3, 0);
+	transport_table.attach (layered_label, TCOL, 1, 2 , FILL, SHRINK, 3, 0);
 	++col;
 
 	transport_table.set_spacings (0);
@@ -164,6 +174,8 @@ TransportBar::TransportBar ()
 	/* theming */
 	sync_button.set_name ("transport active option button");
 
+	/*initialize */
+	repack_transport_hbox ();
 	set_transport_sensitivity (false);
 }
 #undef PX_SCALE
@@ -171,6 +183,107 @@ TransportBar::TransportBar ()
 
 TransportBar::~TransportBar ()
 {
+}
+
+
+void
+TransportBar::repack_transport_hbox ()
+{
+/*	if (time_info_box) {
+		if (time_info_box->get_parent()) {
+			transport_hbox.remove (*time_info_box);
+		}
+		if (UIConfiguration::instance().get_show_toolbar_selclock ()) {
+			transport_hbox.pack_start (*time_info_box, false, false);
+			time_info_box->show();
+		}
+	}
+
+	if (mini_timeline.get_parent()) {
+		transport_hbox.remove (mini_timeline);
+	}
+	if (UIConfiguration::instance().get_show_mini_timeline ()) {
+		transport_hbox.pack_start (mini_timeline, true, true);
+		mini_timeline.show();
+	}
+
+	if (editor_meter) {
+		if (editor_meter_table.get_parent()) {
+			transport_hbox.remove (editor_meter_table);
+		}
+		if (meterbox_spacer.get_parent()) {
+			transport_hbox.remove (meterbox_spacer);
+			transport_hbox.remove (meterbox_spacer2);
+		}
+
+		if (UIConfiguration::instance().get_show_editor_meter()) {
+			transport_hbox.pack_end (meterbox_spacer, false, false, 3);
+			transport_hbox.pack_end (editor_meter_table, false, false);
+			transport_hbox.pack_end (meterbox_spacer2, false, false, 1);
+			meterbox_spacer2.set_size_request (1, -1);
+			editor_meter_table.show();
+			meterbox_spacer.show();
+			meterbox_spacer2.show();
+		}
+	}
+*/
+	bool show_rec = UIConfiguration::instance().get_show_toolbar_recpunch ();
+	if (show_rec) {
+		punch_label.show ();
+		layered_label.show ();
+//		punch_in_button.show ();
+//		punch_out_button.show ();
+//		record_mode_selector.show ();
+//		recpunch_spacer.show ();
+	} else {
+		punch_label.hide ();
+		layered_label.hide ();
+//		punch_in_button.hide ();
+//		punch_out_button.hide ();
+//		record_mode_selector.hide ();
+//		recpunch_spacer.hide ();
+	}
+
+/*
+	bool show_pdc = UIConfiguration::instance().get_show_toolbar_latency ();
+	if (show_pdc) {
+		latency_disable_button.show ();
+		route_latency_value.show ();
+		io_latency_label.show ();
+		io_latency_value.show ();
+		latency_spacer.show ();
+	} else {
+		latency_disable_button.hide ();
+		route_latency_value.hide ();
+		io_latency_label.hide ();
+		io_latency_value.hide ();
+		latency_spacer.hide ();
+	}
+
+	bool show_cue = UIConfiguration::instance().get_show_toolbar_cuectrl ();
+	if (show_cue) {
+		_cue_rec_enable.show ();
+		_cue_play_enable.show ();
+		cuectrl_spacer.show ();
+	} else {
+		_cue_rec_enable.hide ();
+		_cue_play_enable.hide ();
+		cuectrl_spacer.hide ();
+	}
+
+	bool show_mnfo = UIConfiguration::instance().get_show_toolbar_monitor_info ();
+	if (show_mnfo) {
+		monitor_dim_button.show ();
+		monitor_mono_button.show ();
+		monitor_mute_button.show ();
+		monitor_spacer.show ();
+	} else {
+		monitor_dim_button.hide ();
+		monitor_mono_button.hide ();
+		monitor_mute_button.hide ();
+		monitor_spacer.hide ();
+	}
+*/
 }
 
 void
@@ -247,6 +360,71 @@ TransportBar::parameter_changed (std::string p)
 			/* changing sync source without a session is unlikely/impossible , except during startup */
 			sync_button.set_text (TransportMasterManager::instance().current()->display_name());
 		}
+
+//		synchronize_sync_source_and_video_pullup ();
+//		set_fps_timeout_connection ();
+
+	} else if (p == "punch-out") {
+		ActionManager::map_some_state ("Transport", "TogglePunchOut", sigc::mem_fun (_session->config, &SessionConfiguration::get_punch_out));
+		if (!_session->config.get_punch_out()) {
+//			unset_dual_punch ();
+		}
+	} else if (p == "punch-in") {
+		ActionManager::map_some_state ("Transport", "TogglePunchIn", sigc::mem_fun (_session->config, &SessionConfiguration::get_punch_in));
+		if (!_session->config.get_punch_in()) {
+//			unset_dual_punch ();
+		}
+	} else if (p == "primary-clock-delta-mode") {
+//		primary_clock->set_display_delta_mode(UIConfiguration::instance().get_primary_clock_delta_mode());
+	} else if (p == "secondary-clock-delta-mode") {
+//		secondary_clock->set_display_delta_mode(UIConfiguration::instance().get_secondary_clock_delta_mode());
+	} else if (p == "show-mini-timeline") {
+		repack_transport_hbox ();
+	} else if (p == "show-dsp-load-info") {
+		repack_transport_hbox ();
+	} else if (p == "show-disk-space-info") {
+		repack_transport_hbox ();
+	} else if (p == "show-toolbar-recpunch") {
+		repack_transport_hbox ();
+	} else if (p == "show-toolbar-monitoring") {
+		repack_transport_hbox ();
+	} else if (p == "show-toolbar-selclock") {
+		repack_transport_hbox ();
+	} else if (p == "show-toolbar-latency") {
+		repack_transport_hbox ();
+	} else if (p == "show-toolbar-cuectrl") {
+		repack_transport_hbox ();
+	} else if (p == "show-toolbar-monitor-info") {
+		repack_transport_hbox ();
+	} else if (p == "show-editor-meter") {
+		repack_transport_hbox ();
+	} else if (p == "show-secondary-clock") {
+//		update_clock_visibility ();
+	} else if (p == "action-table-columns") {
+/*		const uint32_t cols = UIConfiguration::instance().get_action_table_columns ();
+		for (int i = 0; i < MAX_LUA_ACTION_BUTTONS; ++i) {
+			const int col = i / 2;
+			if (cols & (1<<col)) {
+				action_script_call_btn[i].show();
+			} else {
+				action_script_call_btn[i].hide();
+			}
+		}
+		if (cols == 0) {
+			scripts_spacer.hide ();
+		} else {
+			scripts_spacer.show ();
+		} */
+	} else if (p == "cue-behavior") {
+		CueBehavior cb (_session->config.get_cue_behavior());
+//		_cue_play_enable.set_active (cb & ARDOUR::FollowCues);
+	} else if (p == "record-mode") {
+		size_t m = _session->config.get_record_mode ();
+//		assert (m < record_mode_strings.size ());
+//		record_mode_selector.set_active (record_mode_strings[m]);
+	} else if (p == "no-strobe") {
+//		stop_clocking ();
+//		start_clocking ();
 	}
 }
 

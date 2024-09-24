@@ -80,10 +80,15 @@ private:
 
 	ArdourWidgets::ArdourButton sync_button;
 
+	Gtk::Label   punch_label;
+	Gtk::Label   layered_label;
+
 	//button actions
 	bool sync_button_clicked (GdkEventButton *);
 
 	void parameter_changed (std::string);
+
+	void repack_transport_hbox ();
 
 	void map_transport_state ();
 
