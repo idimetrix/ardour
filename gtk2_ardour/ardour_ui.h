@@ -519,7 +519,6 @@ private:
 	Gtk::HBox                transport_hbox;
 
 	ArdourWidgets::ArdourVSpacer* secondary_clock_spacer;
-	void repack_transport_hbox ();
 	void update_clock_visibility ();
 	void toggle_follow_edits ();
 
@@ -541,9 +540,6 @@ private:
 	ArdourWidgets::ArdourButton monitor_dim_button;
 	ArdourWidgets::ArdourButton monitor_mono_button;
 	ArdourWidgets::ArdourButton monitor_mute_button;
-
-	Gtk::Label   punch_label;
-	Gtk::Label   layered_label;
 
 	Gtk::Label   punch_space;
 
