@@ -317,6 +317,7 @@ gtk2_ardour_sources = [
         'track_selection.cc',
         'track_view_list.cc',
         'transform_dialog.cc',
+        'transport_bar.cc',
         'transport_control.cc',
         'transport_control_ui.cc',
         'transport_masters_dialog.cc',

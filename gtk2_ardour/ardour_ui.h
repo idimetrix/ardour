@@ -166,6 +166,7 @@ class SessionDialog;
 class SessionOptionEditorWindow;
 class Splash;
 class TimeInfoBox;
+class TransportBar;
 class Meterbridge;
 class LuaWindow;
 class MidiTracer;
@@ -525,7 +526,7 @@ private:
 	void set_transport_controllable_state (const XMLNode&);
 	XMLNode& get_transport_controllable_state ();
 
-	TransportControlUI transport_ctrl;
+	TransportBar *transport_bar;
 
 	ArdourWidgets::ArdourButton   punch_in_button;
 	ArdourWidgets::ArdourButton   punch_out_button;
