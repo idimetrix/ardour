@@ -100,6 +100,10 @@ private:
 	Gtk::Label io_latency_label;
 	Gtk::Label io_latency_value;
 
+	ArdourWidgets::ArdourButton auto_return_button;
+	ArdourWidgets::ArdourButton follow_edits_button;
+
+
 	//button actions
 	bool sync_button_clicked (GdkEventButton *);
 
