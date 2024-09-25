@@ -100,9 +100,10 @@ private:
 	Gtk::Label io_latency_label;
 	Gtk::Label io_latency_value;
 
-	ArdourWidgets::ArdourButton auto_return_button;
 	ArdourWidgets::ArdourButton follow_edits_button;
+	ArdourWidgets::ArdourButton auto_return_button;
 
+	ArdourWidgets::ArdourVSpacer* secondary_clock_spacer;
 
 	//button actions
 	bool sync_button_clicked (GdkEventButton *);
@@ -122,6 +123,8 @@ private:
 
 	void latency_switch_changed ();
 	void session_latency_updated (bool);
+
+	void update_clock_visibility ();
 
 	/* blinking alerts */
 	void sync_blink (bool);

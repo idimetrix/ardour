@@ -129,6 +129,7 @@ TransportBar::TransportBar ()
 	, latency_disable_button (ArdourButton::led_default_elements)
 	, follow_edits_button (ArdourButton::led_default_elements)
 	, auto_return_button (ArdourButton::led_default_elements)
+	, secondary_clock_spacer (0)
 {
 	record_mode_strings = I18N (_record_mode_strings);
 
@@ -227,6 +228,28 @@ TransportBar::TransportBar ()
 	transport_table.attach (*(manage (new ArdourVSpacer ())), TCOL, 0, 2 , SHRINK, EXPAND|FILL, 3, 0);
 	++col;
 
+	transport_table.attach (*(ARDOUR_UI::instance()->primary_clock),              col,     col + 2, 0, 1 , FILL, SHRINK, hpadding, 0);
+	transport_table.attach (*(ARDOUR_UI::instance()->primary_clock)->left_btn(),  col,     col + 1, 1, 2 , FILL, SHRINK, hpadding, 0);
+	transport_table.attach (*(ARDOUR_UI::instance()->primary_clock)->right_btn(), col + 1, col + 2, 1, 2 , FILL, SHRINK, hpadding, 0);
+	col += 2;
+
+	transport_table.attach (*(manage (new ArdourVSpacer ())), TCOL, 0, 2 , SHRINK, EXPAND|FILL, 3, 0);
+	++col;
+
+	if (!ARDOUR::Profile->get_small_screen()) {
+		transport_table.attach (*(ARDOUR_UI::instance()->secondary_clock),              col,     col + 2, 0, 1 , FILL, SHRINK, hpadding, 0);
+		transport_table.attach (*(ARDOUR_UI::instance()->secondary_clock)->left_btn(),  col,     col + 1, 1, 2 , FILL, SHRINK, hpadding, 0);
+		transport_table.attach (*(ARDOUR_UI::instance()->secondary_clock)->right_btn(), col + 1, col + 2, 1, 2 , FILL, SHRINK, hpadding, 0);
+		(ARDOUR_UI::instance()->secondary_clock)->set_no_show_all (true);
+		(ARDOUR_UI::instance()->secondary_clock)->left_btn()->set_no_show_all (true);
+		(ARDOUR_UI::instance()->secondary_clock)->right_btn()->set_no_show_all (true);
+		col += 2;
+
+		secondary_clock_spacer = manage (new ArdourVSpacer ());
+		transport_table.attach (*secondary_clock_spacer, TCOL, 0, 2 , SHRINK, EXPAND|FILL, 3, 0);
+		++col;
+	}
+
 	transport_table.set_spacings (0);
 	transport_table.set_row_spacings (4);
 	transport_table.set_border_width (1);
@@ -271,6 +294,7 @@ TransportBar::TransportBar ()
 
 	/*initialize */
 	repack_transport_hbox ();
+	update_clock_visibility ();
 	set_transport_sensitivity (false);
 	latency_switch_changed ();
 	session_latency_updated (true);
@@ -435,6 +459,24 @@ TransportBar::latency_switch_changed ()
 }
 
 void
+TransportBar::update_clock_visibility ()
+{
+	if (ARDOUR::Profile->get_small_screen()) {
+		secondary_clock_spacer->hide();
+		return;
+	}
+	if (UIConfiguration::instance().get_show_secondary_clock ()) {
+		if (secondary_clock_spacer) {
+			secondary_clock_spacer->show();
+		}
+	} else {
+		if (secondary_clock_spacer) {
+			secondary_clock_spacer->hide();
+		}
+	}
+}
+
+void
 TransportBar::session_latency_updated (bool for_playback)
 {
 	if (!for_playback) {
@@ -541,7 +583,7 @@ TransportBar::parameter_changed (std::string p)
 	} else if (p == "show-editor-meter") {
 		repack_transport_hbox ();
 	} else if (p == "show-secondary-clock") {
-//		update_clock_visibility ();
+		update_clock_visibility ();
 	} else if (p == "action-table-columns") {
 /*		const uint32_t cols = UIConfiguration::instance().get_action_table_columns ();
 		for (int i = 0; i < MAX_LUA_ACTION_BUTTONS; ++i) {
