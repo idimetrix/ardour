@@ -558,10 +558,6 @@ TransportBar::parameter_changed (std::string p)
 		if (!_session->config.get_punch_in()) {
 //			unset_dual_punch ();
 		}
-	} else if (p == "primary-clock-delta-mode") {
-//		primary_clock->set_display_delta_mode(UIConfiguration::instance().get_primary_clock_delta_mode());
-	} else if (p == "secondary-clock-delta-mode") {
-//		secondary_clock->set_display_delta_mode(UIConfiguration::instance().get_secondary_clock_delta_mode());
 	} else if (p == "show-mini-timeline") {
 		repack_transport_hbox ();
 	} else if (p == "show-dsp-load-info") {
