@@ -103,6 +103,9 @@ private:
 	ArdourWidgets::ArdourButton follow_edits_button;
 	ArdourWidgets::ArdourButton auto_return_button;
 
+	TransportClock primary_clock;
+	TransportClock secondary_clock;
+
 	ArdourWidgets::ArdourVSpacer* secondary_clock_spacer;
 
 	//button actions
@@ -123,6 +126,8 @@ private:
 
 	void latency_switch_changed ();
 	void session_latency_updated (bool);
+
+	void focus_on_clock ();
 
 	void update_clock_visibility ();
 
