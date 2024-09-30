@@ -136,6 +136,8 @@ TransportBar::TransportBar ()
 	, solo_alert_button (_("Solo"))
 	, feedback_alert_button (_("Feedback"))
 	, _feedback_exists (false)
+	, _cue_rec_enable (_("Rec Cues"), ArdourButton::led_default_elements)
+	, _cue_play_enable (_("Play Cues"), ArdourButton::led_default_elements)
 {
 	record_mode_strings = I18N (_record_mode_strings);
 
@@ -223,6 +225,9 @@ TransportBar::TransportBar ()
 	monitor_mono_button.set_text (_("Mono"));
 	monitor_mute_button.set_text (_("Mute All"));
 
+	_cue_rec_enable.signal_clicked.connect(sigc::mem_fun(*this, &TransportBar::cue_rec_state_clicked));
+	_cue_play_enable.signal_clicked.connect(sigc::mem_fun(*this, &TransportBar::cue_ffwd_state_clicked));
+
 	int vpadding = 1;
 	int hpadding = 2;
 	int col = 0;
@@ -299,6 +304,13 @@ TransportBar::TransportBar ()
 	transport_table.attach (*monitor_box, TCOL, 0, 2 , SHRINK, EXPAND|FILL, 3, 0);
 	++col;
 
+	transport_table.attach (cuectrl_spacer, TCOL, 0, 2 , SHRINK, EXPAND|FILL, 3, 0);
+	++col;
+
+	transport_table.attach (_cue_rec_enable, TCOL, 0, 1 , FILL, FILL, 3, 0);
+	transport_table.attach (_cue_play_enable, TCOL, 1, 2 , FILL, FILL, 3, 0);
+	++col;
+
 
 	transport_table.set_spacings (0);
 	transport_table.set_row_spacings (4);
@@ -354,6 +366,8 @@ TransportBar::TransportBar ()
 	Gtkmm2ext::UI::instance()->set_tip (monitor_dim_button, _("Monitor section dim output"));
 	Gtkmm2ext::UI::instance()->set_tip (monitor_mono_button, _("Monitor section mono output"));
 	Gtkmm2ext::UI::instance()->set_tip (monitor_mute_button, _("Monitor section mute output"));
+	Gtkmm2ext::UI::instance()->set_tip (_cue_rec_enable, _("<b>When enabled</b>, triggering Cues will result in Cue Markers added to the timeline"));
+	Gtkmm2ext::UI::instance()->set_tip (_cue_play_enable, _("<b>When enabled</b>, Cue Markers will trigger the associated Cue when passed on the timeline"));
 
 
 	/* theme-ing */
@@ -389,11 +403,16 @@ TransportBar::TransportBar ()
 
 	feedback_alert_button.set_sizing_text (_("Facdbeek")); //< longest of "Feedback" and "No Align"
 
+	_cue_rec_enable.set_name ("record enable button");
+	_cue_play_enable.set_name ("transport option button");
 
 	/* indicate global latency compensation en/disable */
 	ARDOUR::Latent::DisableSwitchChanged.connect (forever_connections, MISSING_INVALIDATOR, std::bind (&TransportBar::latency_switch_changed, this), gui_context ());
 	ARDOUR::Session::FeedbackDetected.connect (forever_connections, MISSING_INVALIDATOR, std::bind (&TransportBar::feedback_detected, this), gui_context ());
 	ARDOUR::Session::SuccessfulGraphSort.connect (forever_connections, MISSING_INVALIDATOR, std::bind (&TransportBar::successful_graph_sort, this), gui_context ());
+
+	TriggerBox::CueRecordingChanged.connect (forever_connections, MISSING_INVALIDATOR, std::bind (&TransportBar::cue_rec_state_changed, this), gui_context ());
+	cue_rec_state_changed();
 
 	/*initialize */
 	repack_transport_hbox ();
@@ -805,7 +824,7 @@ TransportBar::parameter_changed (std::string p)
 		} */
 	} else if (p == "cue-behavior") {
 		CueBehavior cb (_session->config.get_cue_behavior());
-//		_cue_play_enable.set_active (cb & ARDOUR::FollowCues);
+		_cue_play_enable.set_active (cb & ARDOUR::FollowCues);
 	} else if (p == "record-mode") {
 		size_t m = _session->config.get_record_mode ();
 		assert (m < record_mode_strings.size ());
@@ -828,6 +847,25 @@ TransportBar::sync_button_clicked (GdkEventButton* ev)
 	Glib::RefPtr<ToggleAction> tact = ActionManager::get_toggle_action ("Window", "toggle-transport-masters");
 	tact->set_active();
 	return true;
+}
+
+void
+TransportBar::cue_ffwd_state_clicked ()
+{
+	PublicEditor::instance().toggle_cue_behavior ();
+}
+
+void
+TransportBar::cue_rec_state_clicked ()
+{
+	TriggerBox::set_cue_recording(!TriggerBox::cue_recording());
+}
+
+void
+TransportBar::cue_rec_state_changed ()
+{
+	_cue_rec_enable.set_active_state( TriggerBox::cue_recording() ? Gtkmm2ext::ExplicitActive : Gtkmm2ext::Off);
+	//Config->get_cue_behavior()
 }
 
 void
