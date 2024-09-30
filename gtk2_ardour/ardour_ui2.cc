@@ -270,7 +270,7 @@ ARDOUR_UI::setup_transport ()
 	int col = 0;
 #define TCOL col, col + 1
 
-	transport_table.attach (*transport_bar, TCOL, 0, 2 , SHRINK, EXPAND|FILL, 3, 0);
+	transport_table.attach (*transport_bar, TCOL, 0, 2 , EXPAND|FILL, EXPAND|FILL, 3, 0);
 	++col;
 
 	transport_table.attach (recorder_visibility_button,     TCOL, 0, 1 , FILL, SHRINK, hpadding, vpadding);
