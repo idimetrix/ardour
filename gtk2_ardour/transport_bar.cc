@@ -846,6 +846,8 @@ TransportBar::set_session (Session *s)
 			action_script_call_btn[i].set_sizing_text ("88");
 			action_script_call_btn[i].set_no_show_all ();
 		}
+
+	repack_transport_hbox();
 }
 
 void
@@ -936,19 +938,6 @@ TransportBar::parameter_changed (std::string p)
 			/* changing sync source without a session is unlikely/impossible , except during startup */
 			sync_button.set_text (TransportMasterManager::instance().current()->display_name());
 		}
-//		synchronize_sync_source_and_video_pullup ();
-//		set_fps_timeout_connection ();
-
-	} else if (p == "punch-out") {
-		ActionManager::map_some_state ("Transport", "TogglePunchOut", sigc::mem_fun (_session->config, &SessionConfiguration::get_punch_out));
-		if (!_session->config.get_punch_out()) {
-//			unset_dual_punch ();
-		}
-	} else if (p == "punch-in") {
-		ActionManager::map_some_state ("Transport", "TogglePunchIn", sigc::mem_fun (_session->config, &SessionConfiguration::get_punch_in));
-		if (!_session->config.get_punch_in()) {
-//			unset_dual_punch ();
-		}
 	} else if (p == "show-mini-timeline") {
 		repack_transport_hbox ();
 	} else if (p == "show-dsp-load-info") {
@@ -993,9 +982,6 @@ TransportBar::parameter_changed (std::string p)
 		size_t m = _session->config.get_record_mode ();
 		assert (m < record_mode_strings.size ());
 		record_mode_selector.set_active (record_mode_strings[m]);
-	} else if (p == "no-strobe") {
-//		stop_clocking ();
-//		start_clocking ();
 	}
 }
 
@@ -1128,7 +1114,6 @@ TransportBar::map_transport_state ()
 		record_mode_selector.set_sensitive (!_session->actively_recording ());
 	} else {
 		record_mode_selector.set_sensitive (true);
-//		update_disk_space ();
 	}
 
 }
