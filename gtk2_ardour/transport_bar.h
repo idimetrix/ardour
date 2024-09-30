@@ -120,6 +120,10 @@ private:
 
 	ArdourWidgets::ArdourVSpacer monitor_spacer;
 
+	ArdourWidgets::ArdourButton monitor_dim_button;
+	ArdourWidgets::ArdourButton monitor_mono_button;
+	ArdourWidgets::ArdourButton monitor_mute_button;
+
 	//button actions
 	bool sync_button_clicked (GdkEventButton *);
 

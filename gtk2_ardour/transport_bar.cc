@@ -203,6 +203,26 @@ TransportBar::TransportBar ()
 	alert_box->pack_start (auditioning_alert_button, true, true);
 	alert_box->pack_start (feedback_alert_button, true, true);
 
+	/* monitor section sub-group */
+	VBox* monitor_box = manage (new VBox);
+	monitor_box->set_homogeneous (true);
+	monitor_box->set_spacing (1);
+	monitor_box->set_border_width (0);
+	monitor_box->pack_start (monitor_mono_button, true, true);
+	monitor_box->pack_start (monitor_dim_button, true, true);
+	monitor_box->pack_start (monitor_mute_button, true, true);
+
+	act = ActionManager::get_action (X_("Monitor Section"), X_("monitor-dim-all"));
+	monitor_dim_button.set_related_action (act);
+	act = ActionManager::get_action (X_("Monitor Section"), X_("monitor-mono"));
+	monitor_mono_button.set_related_action (act);
+	act = ActionManager::get_action (X_("Monitor Section"), X_("monitor-cut-all"));
+	monitor_mute_button.set_related_action (act);
+
+	monitor_dim_button.set_text (_("Dim All"));
+	monitor_mono_button.set_text (_("Mono"));
+	monitor_mute_button.set_text (_("Mute All"));
+
 	int vpadding = 1;
 	int hpadding = 2;
 	int col = 0;
@@ -276,6 +296,9 @@ TransportBar::TransportBar ()
 	transport_table.attach (monitor_spacer, TCOL, 0, 2 , SHRINK, EXPAND|FILL, 3, 0);
 	++col;
 
+	transport_table.attach (*monitor_box, TCOL, 0, 2 , SHRINK, EXPAND|FILL, 3, 0);
+	++col;
+
 
 	transport_table.set_spacings (0);
 	transport_table.set_row_spacings (4);
@@ -311,6 +334,11 @@ TransportBar::TransportBar ()
 	clock2_size_group->add_widget (*secondary_clock.left_btn());
 	clock2_size_group->add_widget (*secondary_clock.right_btn());
 
+	Glib::RefPtr<SizeGroup> monitor_button_size_group = SizeGroup::create (Gtk::SIZE_GROUP_HORIZONTAL);
+	monitor_button_size_group->add_widget (monitor_dim_button);
+	monitor_button_size_group->add_widget (monitor_mono_button);
+	monitor_button_size_group->add_widget (monitor_mute_button);
+
 	/* tooltips */
 	Gtkmm2ext::UI::instance()->set_tip (punch_in_button, _("Start recording at auto-punch start"));
 	Gtkmm2ext::UI::instance()->set_tip (punch_out_button, _("Stop recording at auto-punch end"));
@@ -323,6 +351,9 @@ TransportBar::TransportBar ()
 	Gtkmm2ext::UI::instance()->set_tip (solo_alert_button, _("When active, something is soloed.\nClick to de-solo everything"));
 	Gtkmm2ext::UI::instance()->set_tip (auditioning_alert_button, _("When active, auditioning is taking place.\nClick to stop the audition"));
 	Gtkmm2ext::UI::instance()->set_tip (feedback_alert_button, _("When lit, there is a ports connection issue, leading to feedback loop or ambiguous alignment.\nThis is caused by connecting an output back to some input (feedback), or by multiple connections from a source to the same output via different paths (ambiguous latency, record alignment)."));
+	Gtkmm2ext::UI::instance()->set_tip (monitor_dim_button, _("Monitor section dim output"));
+	Gtkmm2ext::UI::instance()->set_tip (monitor_mono_button, _("Monitor section mono output"));
+	Gtkmm2ext::UI::instance()->set_tip (monitor_mute_button, _("Monitor section mute output"));
 
 
 	/* theme-ing */
@@ -336,6 +367,17 @@ TransportBar::TransportBar ()
 	solo_alert_button.set_name ("rude solo");
 	auditioning_alert_button.set_name ("rude audition");
 	feedback_alert_button.set_name ("feedback alert");
+	monitor_dim_button.set_name ("monitor section dim");
+	monitor_mono_button.set_name ("monitor section mono");
+	monitor_mute_button.set_name ("mute button");
+
+	monitor_dim_button.set_layout_font (UIConfiguration::instance().get_SmallerFont());
+	monitor_mono_button.set_layout_font (UIConfiguration::instance().get_SmallerFont());
+	monitor_mute_button.set_layout_font (UIConfiguration::instance().get_SmallerFont());
+
+	monitor_dim_button.set_elements (ArdourButton::Element(ArdourButton::Body|ArdourButton::Text));
+	monitor_mono_button.set_elements (ArdourButton::Element(ArdourButton::Body|ArdourButton::Text));
+	monitor_mute_button.set_elements (ArdourButton::Element(ArdourButton::Body|ArdourButton::Text));
 
 	solo_alert_button.set_elements (ArdourButton::Element(ArdourButton::Body|ArdourButton::Text));
 	auditioning_alert_button.set_elements (ArdourButton::Element(ArdourButton::Body|ArdourButton::Text));
