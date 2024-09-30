@@ -84,11 +84,11 @@
 #include "widgets/ardour_dropdown.h"
 #include "widgets/ardour_spacer.h"
 
-#include "add_route_dialog.h"
 #include "ardour_dialog.h"
 #include "ardour_window.h"
 #include "editing.h"
 #include "enums.h"
+#include "main_clock.h"
 #include "mini_timeline.h"
 #include "shuttle_control.h"
 #include "startup_fsm.h"
