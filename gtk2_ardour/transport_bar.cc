@@ -135,9 +135,15 @@ TransportBar::TransportBar ()
 	, auditioning_alert_button (_("Audition"))
 	, solo_alert_button (_("Solo"))
 	, feedback_alert_button (_("Feedback"))
-	, _feedback_exists (false)
 	, _cue_rec_enable (_("Rec Cues"), ArdourButton::led_default_elements)
 	, _cue_play_enable (_("Play Cues"), ArdourButton::led_default_elements)
+	, time_info_box (0)
+	, editor_meter_peak_display()
+	, editor_meter(0)
+	, _feedback_exists (false)
+	, _ambiguous_latency (false)
+	, _clear_editor_meter( true)
+	, _editor_meter_peaked (false)
 {
 	record_mode_strings = I18N (_record_mode_strings);
 
@@ -228,6 +234,8 @@ TransportBar::TransportBar ()
 	_cue_rec_enable.signal_clicked.connect(sigc::mem_fun(*this, &TransportBar::cue_rec_state_clicked));
 	_cue_play_enable.signal_clicked.connect(sigc::mem_fun(*this, &TransportBar::cue_ffwd_state_clicked));
 
+	time_info_box = new TimeInfoBox ("ToolbarTimeInfo", false);
+
 	int vpadding = 1;
 	int hpadding = 2;
 	int col = 0;
@@ -311,12 +319,16 @@ TransportBar::TransportBar ()
 	transport_table.attach (_cue_play_enable, TCOL, 1, 2 , FILL, FILL, 3, 0);
 	++col;
 
+	/* editor-meter, mini-timeline and selection clock are options in the transport_hbox */
+	transport_hbox.set_spacing (3);
+	transport_table.attach (transport_hbox, TCOL, 0, 2, EXPAND|FILL, EXPAND|FILL, hpadding, 0);
+	++col;
 
 	transport_table.set_spacings (0);
 	transport_table.set_row_spacings (4);
 	transport_table.set_border_width (1);
 	transport_table.show_all();  //TODO: update visibility somewhere else
-	pack_start(transport_table, false, false);
+	pack_start(transport_table, true, true);
 
 	/*sizing */
 	Glib::RefPtr<SizeGroup> button_height_size_group = SizeGroup::create (Gtk::SIZE_GROUP_VERTICAL);
@@ -368,6 +380,7 @@ TransportBar::TransportBar ()
 	Gtkmm2ext::UI::instance()->set_tip (monitor_mute_button, _("Monitor section mute output"));
 	Gtkmm2ext::UI::instance()->set_tip (_cue_rec_enable, _("<b>When enabled</b>, triggering Cues will result in Cue Markers added to the timeline"));
 	Gtkmm2ext::UI::instance()->set_tip (_cue_play_enable, _("<b>When enabled</b>, Cue Markers will trigger the associated Cue when passed on the timeline"));
+	Gtkmm2ext::UI::instance()->set_tip (editor_meter_peak_display, _("Reset All Peak Meters"));
 
 
 	/* theme-ing */
@@ -414,6 +427,8 @@ TransportBar::TransportBar ()
 	TriggerBox::CueRecordingChanged.connect (forever_connections, MISSING_INVALIDATOR, std::bind (&TransportBar::cue_rec_state_changed, this), gui_context ());
 	cue_rec_state_changed();
 
+	UIConfiguration::instance().ParameterChanged.connect (sigc::mem_fun (*this, &TransportBar::parameter_changed));
+
 	/*initialize */
 	repack_transport_hbox ();
 	update_clock_visibility ();
@@ -432,13 +447,14 @@ TransportBar::TransportBar ()
 
 TransportBar::~TransportBar ()
 {
+	delete time_info_box; time_info_box = 0;
 }
 
 
 void
 TransportBar::repack_transport_hbox ()
 {
-/*	if (time_info_box) {
+	if (time_info_box) {
 		if (time_info_box->get_parent()) {
 			transport_hbox.remove (*time_info_box);
 		}
@@ -475,25 +491,24 @@ TransportBar::repack_transport_hbox ()
 			meterbox_spacer2.show();
 		}
 	}
-*/
+
 	bool show_rec = UIConfiguration::instance().get_show_toolbar_recpunch ();
 	if (show_rec) {
 		punch_label.show ();
 		layered_label.show ();
-//		punch_in_button.show ();
-//		punch_out_button.show ();
+		punch_in_button.show ();
+		punch_out_button.show ();
 		record_mode_selector.show ();
-//		recpunch_spacer.show ();
+		recpunch_spacer.show ();
 	} else {
 		punch_label.hide ();
 		layered_label.hide ();
-//		punch_in_button.hide ();
-//		punch_out_button.hide ();
+		punch_in_button.hide ();
+		punch_out_button.hide ();
 		record_mode_selector.hide ();
-//		recpunch_spacer.hide ();
+		recpunch_spacer.hide ();
 	}
 
-/*
 	bool show_pdc = UIConfiguration::instance().get_show_toolbar_latency ();
 	if (show_pdc) {
 		latency_disable_button.show ();
@@ -532,7 +547,6 @@ TransportBar::repack_transport_hbox ()
 		monitor_mute_button.hide ();
 		monitor_spacer.hide ();
 	}
-*/
 }
 
 void
@@ -651,6 +665,8 @@ TransportBar::set_session (Session *s)
 	shuttle_box.set_session (s);
 	primary_clock.set_session (s);
 	secondary_clock.set_session (s);
+	mini_timeline.set_session (s);
+	time_info_box->set_session (s);
 
 	if (_basic_ui) {
 		delete _basic_ui;
@@ -660,7 +676,15 @@ TransportBar::set_session (Session *s)
 	map_transport_state ();
 
 	if (!_session) {
+		point_zero_something_second_connection.disconnect();
 		blink_connection.disconnect ();
+
+		if (editor_meter) {
+			editor_meter_table.remove(*editor_meter);
+			delete editor_meter;
+			editor_meter = 0;
+			editor_meter_peak_display.hide();
+		}
 
 		return;
 	}
@@ -681,7 +705,53 @@ TransportBar::set_session (Session *s)
 
 	solo_alert_button.set_active (_session->soloing());
 
+	if (editor_meter_table.get_parent()) {
+		transport_hbox.remove (editor_meter_table);
+	}
+	if (editor_meter) {
+		editor_meter_table.remove(*editor_meter);
+		delete editor_meter;
+		editor_meter = 0;
+	}
+	if (editor_meter_table.get_parent()) {
+		transport_hbox.remove (editor_meter_table);
+	}
+	if (editor_meter_peak_display.get_parent ()) {
+		editor_meter_table.remove (editor_meter_peak_display);
+	}
+	if (_session &&
+	    _session->master_out() &&
+	    _session->master_out()->n_outputs().n(DataType::AUDIO) > 0) {
+
+		editor_meter = new LevelMeterHBox(_session);
+		editor_meter->set_meter (_session->master_out()->shared_peak_meter().get());
+		editor_meter->clear_meters();
+		editor_meter->setup_meters (30, 10, 6);
+		editor_meter->show();
+
+		editor_meter_table.set_spacings(3);
+		editor_meter_table.attach(*editor_meter,             0,1, 0,1, FILL, EXPAND|FILL, 0, 1);
+		editor_meter_table.attach(editor_meter_peak_display, 0,1, 1,2, FILL, SHRINK, 0, 0);
+
+		editor_meter->show();
+		editor_meter_peak_display.show();
+
+		ArdourMeter::ResetAllPeakDisplays.connect (sigc::mem_fun(*this, &TransportBar::reset_peak_display));
+		ArdourMeter::ResetRoutePeakDisplays.connect (sigc::mem_fun(*this, &TransportBar::reset_route_peak_display));
+		ArdourMeter::ResetGroupPeakDisplays.connect (sigc::mem_fun(*this, &TransportBar::reset_group_peak_display));
+
+		editor_meter_peak_display.set_name ("meterbridge peakindicator");
+		editor_meter_peak_display.set_can_focus (false);
+		editor_meter_peak_display.set_size_request (-1, std::max (5.f, std::min (12.f, rintf (8.f * UIConfiguration::instance().get_ui_scale()))) );
+		editor_meter_peak_display.set_corner_radius (1.0);
+
+		_clear_editor_meter = true;
+		editor_meter_peak_display.signal_button_release_event().connect (sigc::mem_fun(*this, &TransportBar::editor_meter_peak_button_release), false);
+	}
+
 	blink_connection = Timers::blink_connect (sigc::mem_fun(*this, &TransportBar::blink_handler));
+
+	point_zero_something_second_connection = Timers::super_rapid_connect (sigc::mem_fun(*this, &TransportBar::every_point_zero_something_seconds));
 }
 
 void
@@ -876,6 +946,16 @@ TransportBar::set_record_mode (RecordMode m)
 	}
 }
 
+bool
+TransportBar::editor_meter_peak_button_release (GdkEventButton* ev)
+{
+	if (ev->button == 1) {
+		ArdourMeter::ResetAllPeakDisplays ();
+	}
+	return false;
+}
+
+
 void
 TransportBar::sync_blink (bool onoff)
 {
@@ -896,6 +976,32 @@ TransportBar::sync_blink (bool onoff)
 	} else {
 		/* locked */
 		sync_button.set_active (true);
+	}
+}
+
+void
+TransportBar::every_point_zero_something_seconds ()
+{
+	// august 2007: actual update frequency: 25Hz (40ms), not 100Hz
+
+	if (editor_meter && UIConfiguration::instance().get_show_editor_meter() && editor_meter_peak_display.get_mapped ()) {
+
+		if (_clear_editor_meter) {
+			editor_meter->clear_meters();
+			editor_meter_peak_display.set_active_state (Gtkmm2ext::Off);
+			_clear_editor_meter = false;
+			_editor_meter_peaked = false;
+		}
+
+		if (!UIConfiguration::instance().get_no_strobe()) {
+			const float mpeak = editor_meter->update_meters();
+			const bool peaking = mpeak > UIConfiguration::instance().get_meter_peak();
+
+			if (!_editor_meter_peaked && peaking) {
+				editor_meter_peak_display.set_active_state (Gtkmm2ext::ExplicitActive);
+				_editor_meter_peaked = true;
+			}
+		}
 	}
 }
 
@@ -931,4 +1037,29 @@ TransportBar::map_transport_state ()
 //		update_disk_space ();
 	}
 
+}
+
+void
+TransportBar::reset_peak_display ()
+{
+	if (!_session || !_session->master_out() || !editor_meter) return;
+	_clear_editor_meter = true;
+}
+
+void
+TransportBar::reset_group_peak_display (RouteGroup* group)
+{
+	if (!_session || !_session->master_out()) return;
+	if (group == _session->master_out()->route_group()) {
+		reset_peak_display ();
+	}
+}
+
+void
+TransportBar::reset_route_peak_display (Route* route)
+{
+	if (!_session || !_session->master_out()) return;
+	if (_session->master_out().get() == route) {
+		reset_peak_display ();
+	}
 }

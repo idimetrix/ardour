@@ -129,6 +129,18 @@ private:
 	ArdourWidgets::ArdourButton  _cue_rec_enable;
 	ArdourWidgets::ArdourButton  _cue_play_enable;
 
+	Gtk::HBox                transport_hbox;
+
+	MiniTimeline       mini_timeline;
+	TimeInfoBox*       time_info_box;
+
+	Gtk::Table editor_meter_table;
+	ArdourWidgets::ArdourButton editor_meter_peak_display;
+	LevelMeterHBox *            editor_meter;
+
+	ArdourWidgets::ArdourVSpacer      meterbox_spacer;
+	Gtk::HBox                         meterbox_spacer2;
+
 	//button actions
 	bool sync_button_clicked (GdkEventButton *);
 
@@ -167,10 +179,22 @@ private:
 	void cue_rec_state_changed ();
 	void cue_rec_state_clicked ();
 
+	void reset_peak_display ();
+	void reset_route_peak_display (ARDOUR::Route*);
+	void reset_group_peak_display (ARDOUR::RouteGroup*);
+
+	bool  _clear_editor_meter;
+	bool  _editor_meter_peaked;
+	bool  editor_meter_peak_button_release (GdkEventButton*);
+
+	void every_point_zero_something_seconds ();
+
 	/* blinking alerts */
 	void sync_blink (bool);
 	void blink_handler (bool);
 	sigc::connection blink_connection;
 
 	PBD::ScopedConnectionList forever_connections;
+	sigc::connection point_zero_something_second_connection;
+
 };
