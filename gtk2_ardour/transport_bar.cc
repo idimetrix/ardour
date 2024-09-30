@@ -126,7 +126,21 @@ TransportBar::TransportBar ()
 	transport_ctrl.setup (ARDOUR_UI::instance ());
 	transport_ctrl.map_actions ();
 
-	pack_start(transport_ctrl, false, false);
+	int vpadding = 1;
+	int hpadding = 2;
+	int col = 0;
+#define TCOL col, col + 1
+
+	transport_table.attach (transport_ctrl, TCOL, 0, 1 , SHRINK, SHRINK, 0, 0);
+//	transport_table.attach (*ssbox,         TCOL, 1, 2 , FILL,   SHRINK, 0, 0);
+	++col;
+
+
+
+	transport_table.set_spacings (0);
+	transport_table.set_row_spacings (4);
+	transport_table.set_border_width (1);
+	pack_start(transport_table, false, false);
 }
 
 TransportBar::~TransportBar ()

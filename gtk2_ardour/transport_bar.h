@@ -70,6 +70,8 @@ public:
 	void set_session (ARDOUR::Session *);
 
 private:
+	Gtk::Table    transport_table;
+
 	BasicUI*      _basic_ui;
 
 	TransportControlUI transport_ctrl;
