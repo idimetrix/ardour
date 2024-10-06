@@ -220,19 +220,14 @@ TransportBar::TransportBar ()
 	monitor_box->pack_start (monitor_dim_button, true, true);
 	monitor_box->pack_start (monitor_mute_button, true, true);
 
-	act = ActionManager::get_action (X_("Monitor Section"), X_("monitor-dim-all"));
-	monitor_dim_button.set_related_action (act);
-	act = ActionManager::get_action (X_("Monitor Section"), X_("monitor-mono"));
-	monitor_mono_button.set_related_action (act);
-	act = ActionManager::get_action (X_("Monitor Section"), X_("monitor-cut-all"));
-	monitor_mute_button.set_related_action (act);
-
 	monitor_dim_button.set_text (_("Dim All"));
 	monitor_mono_button.set_text (_("Mono"));
 	monitor_mute_button.set_text (_("Mute All"));
 
 	_cue_rec_enable.signal_clicked.connect(sigc::mem_fun(*this, &TransportBar::cue_rec_state_clicked));
 	_cue_play_enable.signal_clicked.connect(sigc::mem_fun(*this, &TransportBar::cue_ffwd_state_clicked));
+
+	LuaInstance::instance()->ActionChanged.connect (sigc::mem_fun (*this, &TransportBar::action_script_changed));
 
 	time_info_box = new TimeInfoBox ("ToolbarTimeInfo", false);
 
@@ -324,6 +319,17 @@ TransportBar::TransportBar ()
 	transport_table.attach (transport_hbox, TCOL, 0, 2, EXPAND|FILL, EXPAND|FILL, hpadding, 0);
 	++col;
 
+	/* lua script action buttons */
+	for (int i = 0; i < MAX_LUA_ACTION_BUTTONS; ++i) {
+		const int r = i % 2;
+		const int c = col + i / 2;
+		transport_table.attach (action_script_call_btn[i], c, c + 1, r, r + 1, FILL, SHRINK, 1, vpadding);
+	}
+	col += MAX_LUA_ACTION_BUTTONS / 2;
+
+	transport_table.attach (scripts_spacer, TCOL, 0, 2 , SHRINK, EXPAND|FILL, 3, 0);
+	++col;
+
 	transport_table.set_spacings (0);
 	transport_table.set_row_spacings (4);
 	transport_table.set_border_width (1);
@@ -339,6 +345,10 @@ TransportBar::TransportBar ()
 	button_height_size_group->add_widget (latency_disable_button);
 	button_height_size_group->add_widget (follow_edits_button);
 	button_height_size_group->add_widget (auto_return_button);
+
+	for (int i = 0; i < MAX_LUA_ACTION_BUTTONS; ++i) {
+		button_height_size_group->add_widget (action_script_call_btn[i]);
+	}
 
 	/* clock button size groups */
 	button_height_size_group->add_widget (*primary_clock.left_btn());
@@ -656,6 +666,63 @@ TransportBar::feedback_blink (bool onoff)
 	}
 }
 
+
+bool
+TransportBar::bind_lua_action_script (GdkEventButton*ev, int i)
+{
+	if (!_session) {
+		return false;
+	}
+	LuaInstance *li = LuaInstance::instance();
+	std::string name;
+	if (ev->button != 3 && !(ev->button == 1 && !li->lua_action_name (i, name))) {
+		return false;
+	}
+	if (Gtkmm2ext::Keyboard::modifier_state_equals (ev->state, Gtkmm2ext::Keyboard::TertiaryModifier)) {
+		li->remove_lua_action (i);
+	} else {
+		Gtk::Window *win = dynamic_cast<Gtk::Window*> (get_toplevel());
+		li->interactive_add (*win, LuaScriptInfo::EditorAction, i);
+	}
+	return true;
+}
+
+void
+TransportBar::action_script_changed (int i, const std::string& n)
+{
+	if (i < 0 || i >= MAX_LUA_ACTION_SCRIPTS) {
+		return;
+	}
+
+	if (i < MAX_LUA_ACTION_BUTTONS) {
+		if (LuaInstance::instance()->lua_action_has_icon (i)) {
+			uintptr_t ii = i;
+			action_script_call_btn[i].set_icon (&LuaInstance::render_action_icon, (void*)ii);
+		} else {
+			action_script_call_btn[i].set_icon (0, 0);
+		}
+		if (n.empty ()) {
+			action_script_call_btn[i].set_text (string_compose ("%1%2", std::hex, i+1));
+		} else {
+			action_script_call_btn[i].set_text (n.substr(0,1));
+		}
+	}
+
+	std::string const a = string_compose (X_("script-%1"), i + 1);
+	Glib::RefPtr<Action> act = ActionManager::get_action(X_("LuaAction"), a.c_str());
+	assert (act);
+	if (n.empty ()) {
+		act->set_label (string_compose (_("Unset #%1"), i + 1));
+		act->set_tooltip (_("No action bound\nRight-click to assign"));
+		act->set_sensitive (false);
+	} else {
+		act->set_label (n);
+		act->set_tooltip (string_compose (_("%1\n\nClick to run\nRight-click to re-assign\nShift+right-click to unassign"), n));
+		act->set_sensitive (true);
+	}
+	KeyEditor::UpdateBindings ();
+}
+
 void
 TransportBar::set_session (Session *s)
 {
@@ -749,9 +816,36 @@ TransportBar::set_session (Session *s)
 		editor_meter_peak_display.signal_button_release_event().connect (sigc::mem_fun(*this, &TransportBar::editor_meter_peak_button_release), false);
 	}
 
-	blink_connection = Timers::blink_connect (sigc::mem_fun(*this, &TransportBar::blink_handler));
+	//TODO : only do this once,  OR,  make a dedicated function for initializing actions after ARDOUR_UI, et al, have created them
+		blink_connection = Timers::blink_connect (sigc::mem_fun(*this, &TransportBar::blink_handler));
 
-	point_zero_something_second_connection = Timers::super_rapid_connect (sigc::mem_fun(*this, &TransportBar::every_point_zero_something_seconds));
+		point_zero_something_second_connection = Timers::super_rapid_connect (sigc::mem_fun(*this, &TransportBar::every_point_zero_something_seconds));
+
+		Glib::RefPtr<Action> act;
+
+		act = ActionManager::get_action (X_("Monitor Section"), X_("monitor-dim-all"));
+		monitor_dim_button.set_related_action (act);
+		act = ActionManager::get_action (X_("Monitor Section"), X_("monitor-mono"));
+		monitor_mono_button.set_related_action (act);
+		act = ActionManager::get_action (X_("Monitor Section"), X_("monitor-cut-all"));
+		monitor_mute_button.set_related_action (act);
+
+		for (int i = 0; i < MAX_LUA_ACTION_BUTTONS; ++i) {
+			std::string const a = string_compose (X_("script-%1"), i + 1);
+			Glib::RefPtr<Action> act = ActionManager::get_action(X_("LuaAction"), a.c_str());
+			assert (act);
+			action_script_call_btn[i].set_name ("lua action button");
+			action_script_call_btn[i].set_text (string_compose ("%1%2", std::hex, i+1));
+			action_script_call_btn[i].set_related_action (act);
+			action_script_call_btn[i].signal_button_press_event().connect (sigc::bind (sigc::mem_fun(*this, &TransportBar::bind_lua_action_script), i), false);
+			if (act->get_sensitive ()) {
+				action_script_call_btn[i].set_visual_state (Gtkmm2ext::VisualState (action_script_call_btn[i].visual_state() & ~Gtkmm2ext::Insensitive));
+			} else {
+				action_script_call_btn[i].set_visual_state (Gtkmm2ext::VisualState (action_script_call_btn[i].visual_state() | Gtkmm2ext::Insensitive));
+			}
+			action_script_call_btn[i].set_sizing_text ("88");
+			action_script_call_btn[i].set_no_show_all ();
+		}
 }
 
 void
@@ -878,7 +972,7 @@ TransportBar::parameter_changed (std::string p)
 	} else if (p == "show-secondary-clock") {
 		update_clock_visibility ();
 	} else if (p == "action-table-columns") {
-/*		const uint32_t cols = UIConfiguration::instance().get_action_table_columns ();
+		const uint32_t cols = UIConfiguration::instance().get_action_table_columns ();
 		for (int i = 0; i < MAX_LUA_ACTION_BUTTONS; ++i) {
 			const int col = i / 2;
 			if (cols & (1<<col)) {
@@ -891,7 +985,7 @@ TransportBar::parameter_changed (std::string p)
 			scripts_spacer.hide ();
 		} else {
 			scripts_spacer.show ();
-		} */
+		}
 	} else if (p == "cue-behavior") {
 		CueBehavior cb (_session->config.get_cue_behavior());
 		_cue_play_enable.set_active (cb & ARDOUR::FollowCues);
