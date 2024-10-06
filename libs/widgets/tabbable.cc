@@ -18,10 +18,12 @@
  */
 
 #include <gtkmm/action.h>
+#include <gtkmm/frame.h>
 #include <gtkmm/notebook.h>
 #include <gtkmm/window.h>
 #include <gtkmm/stock.h>
 
+#include "gtkmm2ext/actions.h"
 #include "gtkmm2ext/gtk_ui.h"
 #include "gtkmm2ext/utils.h"
 #include "gtkmm2ext/visibility_tracker.h"
@@ -35,12 +37,54 @@ using namespace Gtk;
 using namespace Gtkmm2ext;
 using namespace ArdourWidgets;
 
-Tabbable::Tabbable (Widget& w, const string& visible_name, string const & nontranslatable_name, bool tabbed_by_default)
+Tabbable::Tabbable (Gtk::Widget& w, const string& visible_name, string const & nontranslatable_name, bool tabbed_by_default)
 	: WindowProxy (visible_name, nontranslatable_name)
 	, _contents (w)
 	, _parent_notebook (0)
 	, tab_requested_by_state (tabbed_by_default)
 {
+	_strip_attachment_button.set_text(_("Left"));
+	_list_attachment_button.set_text(_("Right"));
+	_prop_attachment_button.set_text(_("Btm"));
+
+	_content_attachment_hbox.set_border_width(3);
+	_content_attachment_hbox.set_spacing(3);
+	_content_attachment_hbox.pack_end(_list_attachment_button, false, false);
+	_content_attachment_hbox.pack_end(_prop_attachment_button, false, false);
+	_content_attachment_hbox.pack_end(_strip_attachment_button, false, false);
+	_content_attachments_ebox.add(_content_attachment_hbox);
+
+	_content_header_hbox.pack_start(_content_transport_ebox, true, true);
+	_content_header_hbox.pack_start(_content_attachments_ebox, false, false);
+	_content_header_hbox.pack_start(_content_tabbables_ebox, false, false);
+
+	//wrap the header eboxen in a themeable frame
+	Gtk::Frame *toolbar_frame = manage(new Gtk::Frame);
+	toolbar_frame->set_name ("TransportFrame");
+	toolbar_frame->set_shadow_type (Gtk::SHADOW_NONE);
+	toolbar_frame->add(_content_header_hbox);
+
+	_content_vbox.pack_start(*toolbar_frame, false, false);
+	_content_vbox.pack_start(_content_hbox, true, true);
+
+	_content_hbox.pack_start(_content_strip_ebox, false, false);
+	_content_hbox.pack_start(_content_midlevel_vbox, true, true);
+
+	_content_midlevel_vbox.pack_start(_content_list_pane, true, true);
+	_content_midlevel_vbox.pack_start(_content_props_ebox, false, false);
+
+	_content_list_pane.add(_content_inner_vbox);
+	_content_list_pane.add(_content_list_vbox);
+
+	//TODO: menu switcher here?
+	_content_list_vbox.pack_start(_content_list_ebox, true, true);
+
+	_content_inner_vbox.pack_start(_content_toolbar_ebox, false, false);
+	_content_inner_vbox.pack_start(_content_innermost_ebox, true, true);
+
+	_content_list_pane.set_child_minsize (_content_list_ebox, 160); /* rough guess at width of notebook tabs */
+
+	_content_vbox.show_all();
 }
 
 Tabbable::~Tabbable ()
@@ -390,4 +434,70 @@ void
 Tabbable::window_unmapped ()
 {
 	StateChange (*this);
+}
+
+void
+Tabbable::showhide_sidebar_list (bool yn)
+{
+	if (yn) {
+		_content_list_vbox.show ();
+	} else {
+		_content_list_vbox.hide ();
+	}
+}
+
+void
+Tabbable::list_button_toggled ()
+{
+	Glib::RefPtr<Gtk::Action> act = _list_attachment_button.get_related_action();
+	if (act) {
+		Glib::RefPtr<Gtk::ToggleAction> tact = Glib::RefPtr<Gtk::ToggleAction>::cast_dynamic(act);
+		if (tact) {
+			showhide_sidebar_list (tact->get_active());
+		}
+	}
+}
+
+void
+Tabbable::showhide_sidebar_strip (bool yn)
+{
+	if (yn) {
+		_content_strip_ebox.show ();
+	} else {
+		_content_strip_ebox.hide ();
+	}
+}
+
+void
+Tabbable::strip_button_toggled ()
+{
+	Glib::RefPtr<Gtk::Action> act = _strip_attachment_button.get_related_action();
+	if (act) {
+		Glib::RefPtr<Gtk::ToggleAction> tact = Glib::RefPtr<Gtk::ToggleAction>::cast_dynamic(act);
+		if (tact) {
+			showhide_sidebar_strip (tact->get_active());
+		}
+	}
+}
+
+void
+Tabbable::showhide_btm_props (bool yn)
+{
+	if (yn) {
+		_content_props_ebox.show ();
+	} else {
+		_content_props_ebox.hide ();
+	}
+}
+
+void
+Tabbable::props_button_toggled ()
+{
+	Glib::RefPtr<Gtk::Action> act = _prop_attachment_button.get_related_action();
+	if (act) {
+		Glib::RefPtr<Gtk::ToggleAction> tact = Glib::RefPtr<Gtk::ToggleAction>::cast_dynamic(act);
+		if (tact) {
+			showhide_btm_props (tact->get_active());
+		}
+	}
 }
