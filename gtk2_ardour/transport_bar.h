@@ -274,6 +274,10 @@ private:
 	ArdourWidgets::ArdourVSpacer      meterbox_spacer;
 	Gtk::HBox                         meterbox_spacer2;
 
+	ArdourWidgets::ArdourVSpacer scripts_spacer;
+
+	ArdourWidgets::ArdourButton action_script_call_btn[MAX_LUA_ACTION_BUTTONS];
+
 	//button actions
 	bool sync_button_clicked (GdkEventButton *);
 
@@ -319,6 +323,9 @@ private:
 	bool  _clear_editor_meter;
 	bool  _editor_meter_peaked;
 	bool  editor_meter_peak_button_release (GdkEventButton*);
+
+	bool bind_lua_action_script (GdkEventButton*, int);
+	void action_script_changed (int i, const std::string&);
 
 	void every_point_zero_something_seconds ();
 
