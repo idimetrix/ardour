@@ -157,6 +157,7 @@
 #include "grid_lines.h"
 #include "time_axis_view.h"
 #include "timers.h"
+#include "transport_bar.h"
 #include "ui_config.h"
 #include "utils.h"
 #include "vca_time_axis.h"
@@ -249,6 +250,7 @@ Editor::Editor ()
 	, _track_canvas_viewport (0)
 	, within_track_canvas (false)
 	, _region_peak_cursor (0)
+	, _transport_bar (0)
 	, tempo_group (0)
 	, meter_group (0)
 	, marker_group (0)
@@ -501,6 +503,9 @@ Editor::Editor ()
 	initialize_canvas ();
 
 	CairoWidget::set_focus_handler (sigc::mem_fun (ARDOUR_UI::instance(), &ARDOUR_UI::reset_focus));
+
+	_transport_bar = manage(new TransportBar());
+	signal_tabbed_changed.connect (sigc::mem_fun (*this, &Editor::tabbed_changed));
 
 	_summary = new EditorSummary (this);
 
@@ -1023,6 +1028,16 @@ Editor::deferred_control_scroll (samplepos_t /*target*/)
 }
 
 void
+Editor::tabbed_changed (bool tabbed)
+{
+	if (tabbed) {
+		_transport_bar->hide ();
+	} else {
+		_transport_bar->show ();
+	}
+}
+
+void
 Editor::access_action (const std::string& action_group, const std::string& action_item)
 {
 	if (!_session) {
@@ -1225,6 +1240,7 @@ Editor::set_session (Session *t)
 	 * before the visible state has been loaded from instant.xml */
 	_leftmost_sample = session_gui_extents().first.samples();
 
+	_transport_bar->set_session (_session);
 	nudge_clock->set_session (_session);
 	_summary->set_session (_session);
 	_group_tabs->set_session (_session);

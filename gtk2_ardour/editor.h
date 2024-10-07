@@ -150,6 +150,7 @@ class TimeAxisView;
 class TimeInfoBox;
 class TimeFXDialog;
 class TimeSelection;
+class TransportBar;
 class RegionLayeringOrderEditor;
 class VerboseCursor;
 
@@ -531,6 +532,8 @@ private:
 	void color_handler ();
 	bool constructed;
 
+	void tabbed_changed (bool);
+
 	// to keep track of the playhead position for control_scroll
 	std::optional<samplepos_t> _control_scroll_target;
 
@@ -782,6 +785,8 @@ private:
 
 	void parameter_changed (std::string);
 	void ui_parameter_changed (std::string);
+
+	TransportBar*            _transport_bar;
 
 	Gtk::EventBox            time_bars_event_box;
 	Gtk::VBox                time_bars_vbox;
