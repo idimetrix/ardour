@@ -402,6 +402,8 @@ Tabbable::set_state (const XMLNode& node, int version)
 	if (_visible) {
 		show_own_window (true);
 		signal_tabbed_changed (false);
+	} else {
+		signal_tabbed_changed (true);
 	}
 
 	XMLNodeList children = node.children ();
