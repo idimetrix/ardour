@@ -62,6 +62,7 @@
 #include "timers.h"
 #include "timers.h"
 #include "track_record_axis.h"
+#include "transport_bar.h"
 #include "ui_config.h"
 #include "utils.h"
 
@@ -101,9 +102,7 @@ RecorderUI::RecorderUI ()
 	load_bindings ();
 	register_actions ();
 
-	_transport_ctrl.setup (ARDOUR_UI::instance ());
-	_transport_ctrl.map_actions ();
-	_transport_ctrl.set_no_show_all ();
+	_transport_bar = manage(new TransportBar());
 
 	signal_tabbed_changed.connect (sigc::mem_fun (*this, &RecorderUI::tabbed_changed));
 
@@ -208,9 +207,6 @@ RecorderUI::RecorderUI ()
 	int hpadding = 2;
 	int spacepad = 3;
 	int col = 0;
-
-	_button_table.attach (_transport_ctrl, col,  col + 1, 0, 1, FILL, FILL, hpadding, vpadding);
-	col += 1;
 
 	_button_table.attach (_duration_info_box,  col,     col + 1, 0, 1, FILL, FILL,   hpadding, vpadding);
 	_button_table.attach (_xrun_info_box,      col + 1, col + 2, 0, 1, FILL, FILL,   hpadding, vpadding);
@@ -360,9 +356,9 @@ void
 RecorderUI::tabbed_changed (bool tabbed)
 {
 	if (tabbed) {
-		_transport_ctrl.hide ();
+		_transport_bar->hide ();
 	} else {
-		_transport_ctrl.show ();
+		_transport_bar->show ();
 	}
 }
 
@@ -408,7 +404,7 @@ RecorderUI::set_session (Session* s)
 	_duration_info_box.set_session (s);
 	_xrun_info_box.set_session (s);
 	_remain_info_box.set_session (s);
-	_transport_ctrl.set_session (s);
+	_transport_bar->set_session (s);
 	_rec_group_tabs->set_session (s);
 
 	update_sensitivity ();
