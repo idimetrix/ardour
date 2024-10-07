@@ -46,7 +46,6 @@
 #include "input_port_monitor.h"
 #include "rec_info_box.h"
 #include "shuttle_control.h"
-#include "transport_control_ui.h"
 
 namespace ARDOUR {
 	class SoloMuteRelease;
@@ -54,6 +53,7 @@ namespace ARDOUR {
 }
 
 class TrackRecordAxis;
+class TransportBar;
 class RecorderGroupTabs;
 
 class RecorderUI : public ArdourWidgets::Tabbable, public ARDOUR::SessionHandlePtr, public PBD::ScopedConnectionList
@@ -154,7 +154,7 @@ private:
 	DurationInfoBox              _duration_info_box;
 	XrunInfoBox                  _xrun_info_box;
 	RemainInfoBox                _remain_info_box;
-	TransportControlUI           _transport_ctrl;
+	TransportBar                 *_transport_bar;
 	Glib::RefPtr<Gtk::SizeGroup> _toolbar_button_height;
 	Glib::RefPtr<Gtk::SizeGroup> _toolbar_recarm_width;
 	Glib::RefPtr<Gtk::SizeGroup> _toolbar_monitoring_width;
