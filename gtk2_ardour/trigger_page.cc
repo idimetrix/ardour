@@ -70,10 +70,14 @@ TriggerPage::TriggerPage ()
 	, _cue_box (16, 16 * TriggerBox::default_triggers_per_box)
 	, _master_widget (16, 16)
 	, _master (_master_widget.root ())
+	, _transport_bar (0)
 	, _selection (*this, *this)
 {
 	load_bindings ();
 	register_actions ();
+
+	_transport_bar = manage(new TransportBar());
+	signal_tabbed_changed.connect (sigc::mem_fun (*this, &TriggerPage::tabbed_changed));
 
 	/* Match TriggerStrip::_name_button height */
 	ArdourButton* spacer = manage (new ArdourButton (ArdourButton::Text));
@@ -256,6 +260,8 @@ TriggerPage::set_session (Session* s)
 {
 	SessionHandlePtr::set_session (s);
 
+	_transport_bar->set_session (_session);
+
 	_cue_box.set_session (s);
 	_trigger_clip_picker.set_session (s);
 	_master.set_session (s);
@@ -360,6 +366,16 @@ TriggerPage::add_sidebar_page (string const & name, Gtk::Widget& widget)
 	b->add (*l);
 	b->show_all ();
 	_sidebar_notebook.append_page (widget, *b);
+}
+
+void
+TriggerPage::tabbed_changed (bool tabbed)
+{
+	if (tabbed) {
+		_transport_bar->hide ();
+	} else {
+		_transport_bar->show ();
+	}
 }
 
 void
