@@ -48,6 +48,7 @@
 #include "public_editor.h"
 #include "midi_cue_editor.h"
 #include "timers.h"
+#include "transport_bar.h"
 #include "trigger_page.h"
 #include "trigger_strip.h"
 #include "triggerbox_ui.h"
@@ -74,6 +75,9 @@ TriggerPage::TriggerPage ()
 {
 	load_bindings ();
 	register_actions ();
+
+	_transport_bar = manage(new TransportBar());
+	signal_tabbed_changed.connect (sigc::mem_fun (*this, &TriggerPage::tabbed_changed));
 
 	/* Match TriggerStrip::_name_button height */
 	ArdourButton* spacer = manage (new ArdourButton (ArdourButton::Text));
@@ -256,6 +260,8 @@ TriggerPage::set_session (Session* s)
 {
 	SessionHandlePtr::set_session (s);
 
+	_transport_bar->set_session (_session);
+
 	_cue_box.set_session (s);
 	_trigger_clip_picker.set_session (s);
 	_master.set_session (s);
@@ -360,6 +366,16 @@ TriggerPage::add_sidebar_page (string const & name, Gtk::Widget& widget)
 	b->add (*l);
 	b->show_all ();
 	_sidebar_notebook.append_page (widget, *b);
+}
+
+void
+TriggerPage::tabbed_changed (bool tabbed)
+{
+	if (tabbed) {
+		_transport_bar->hide ();
+	} else {
+		_transport_bar->show ();
+	}
 }
 
 void
