@@ -179,7 +179,7 @@ ARDOUR_UI::setup_transport ()
 	recorder_visibility_button.set_related_action (ActionManager::get_action (X_("Common"), X_("change-recorder-visibility")));
 	trigger_page_visibility_button.set_related_action (ActionManager::get_action (X_("Common"), X_("change-trigger-visibility")));
 
-	transport_bar = new TransportBar();  //TODO:  move this to Editor, Cue, Rec, Mix   //TODO: all transport, ui and monitor actions need to be instantiated before this
+	transport_bar = new TransportBar();
 
 	/* connect signals */
 	ARDOUR_UI::Clock.connect (sigc::bind (sigc::mem_fun (primary_clock, &MainClock::set), false));

@@ -311,6 +311,8 @@ ARDOUR_UI::setup_windows ()
 	build_menu_bar ();
 	setup_tooltips ();
 
+	ActionsReady ();  //signal
+
 	_main_window.signal_delete_event().connect (sigc::mem_fun (*this, &ARDOUR_UI::main_window_delete_event));
 
 	/* pack the main vpacker into the main window and show everything
