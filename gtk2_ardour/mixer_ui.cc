@@ -92,6 +92,7 @@
 #include "route_sorter.h"
 #include "surround_strip.h"
 #include "timers.h"
+#include "transport_bar.h"
 #include "ui_config.h"
 #include "vca_master_strip.h"
 
@@ -152,6 +153,7 @@ Mixer_UI::Mixer_UI ()
 	, _maximised (false)
 	, _strip_selection_change_without_scroll (false)
 	, _selection (*this, *this)
+	, _transport_bar (0)
 {
 
 	plugin_list_mode_strings = I18N (_plugin_list_mode_strings);
@@ -162,6 +164,8 @@ Mixer_UI::Mixer_UI ()
 	fb_act->set_sensitive (false);
 
 	_content.set_data ("ardour-bindings", bindings);
+	_transport_bar = manage(new TransportBar());
+	signal_tabbed_changed.connect (sigc::mem_fun (*this, &Mixer_UI::tabbed_changed));
 
 	PresentationInfo::Change.connect (*this, invalidator (*this), std::bind (&Mixer_UI::presentation_info_changed, this, _1), gui_context());
 	Route::FanOut.connect (*this, invalidator (*this), std::bind (&Mixer_UI::fan_out, this, _1, false, true), gui_context());
@@ -1279,6 +1283,8 @@ Mixer_UI::set_session (Session* sess)
 	}
 
 	_group_tabs->set_session (sess);
+
+	_transport_bar->set_session (_session);
 
 	update_scene_buttons();
 
@@ -3164,6 +3170,16 @@ Mixer_UI::save_favorite_ui_state (const TreeModel::iterator& iter, const TreeMod
 	ARDOUR::PluginPresetPtr ppp = row[favorite_plugins_columns.plugin];
 	assert (ppp);
 	favorite_ui_state[(*ppp->_pip).unique_id] = favorite_plugins_display.row_expanded (favorite_plugins_model->get_path(iter));
+}
+
+void
+Mixer_UI::tabbed_changed (bool tabbed)
+{
+	if (tabbed) {
+		_transport_bar->hide ();
+	} else {
+		_transport_bar->show ();
+	}
 }
 
 void

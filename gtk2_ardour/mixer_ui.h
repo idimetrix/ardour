@@ -73,6 +73,7 @@ class PluginSelector;
 class MixerGroupTabs;
 class MonitorSection;
 class SurroundStrip;
+class TransportBar;
 class VCAMasterStrip;
 
 class PluginTreeStore : public Gtk::TreeStore
@@ -395,6 +396,8 @@ private:
 	Glib::RefPtr<Gtk::ListStore> group_model;
 	Glib::RefPtr<PluginTreeStore> favorite_plugins_model;
 
+	TransportBar*            _transport_bar;
+
 	bool group_display_button_press (GdkEventButton*);
 	void group_display_selection_changed ();
 
@@ -458,6 +461,8 @@ private:
 	void sync_treeview_from_favorite_order ();
 	void sync_treeview_favorite_ui_state (const Gtk::TreeModel::Path&, const Gtk::TreeModel::iterator&);
 	void save_favorite_ui_state (const Gtk::TreeModel::iterator& iter, const Gtk::TreeModel::Path& path);
+
+	void tabbed_changed (bool);
 
 	/// true if we are in fullscreen mode
 	bool _maximised;
