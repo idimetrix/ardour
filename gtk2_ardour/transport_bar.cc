@@ -151,8 +151,6 @@ TransportBar::TransportBar ()
 	transport_ctrl.map_actions ();
 
 	/* sync_button */
-	Glib::RefPtr<Action> act = ActionManager::get_action (X_("Transport"), X_("ToggleExternalSync"));
-	sync_button.set_related_action (act);
 	sync_button.signal_button_press_event().connect (sigc::mem_fun (*this, &TransportBar::sync_button_clicked), false);
 	sync_button.set_sizing_text (S_("LogestSync|M-Clk"));
 
@@ -175,31 +173,13 @@ TransportBar::TransportBar ()
 	record_mode_selector.AddMenuElem (MenuElem (record_mode_strings[(int)RecSoundOnSound], sigc::bind (sigc::mem_fun (*this, &TransportBar::set_record_mode), RecSoundOnSound)));
 	record_mode_selector.set_sizing_texts (record_mode_strings);
 
-	act = ActionManager::get_action ("Transport", "TogglePunchIn");
-	punch_in_button.set_related_action (act);
-	act = ActionManager::get_action ("Transport", "TogglePunchOut");
-	punch_out_button.set_related_action (act);
-
-	act = ActionManager::get_action ("Main", "ToggleLatencyCompensation");
-	latency_disable_button.set_related_action (act);
-
 	latency_disable_button.set_text (_("Disable PDC"));
 	io_latency_label.set_text (_("I/O Latency:"));
 
 	set_size_request_to_display_given_text (route_latency_value, "1000 spl", 0, 0);
 	set_size_request_to_display_given_text (io_latency_value, "888.88 ms", 0, 0);
 
-	act = ActionManager::get_action ("Transport", "ToggleAutoReturn");
-	auto_return_button.set_related_action (act);
-	act = ActionManager::get_action (X_("Transport"), X_("ToggleFollowEdits"));
-	follow_edits_button.set_related_action (act);
 
-	auto_return_button.set_text(_("Auto Return"));
-	follow_edits_button.set_text(_("Follow Range"));
-
-	/* CANNOT sigc::bind these to clicked or toggled, must use pressed or released */
-	act = ActionManager::get_action (X_("Main"), X_("cancel-solo"));
-	solo_alert_button.set_related_action (act);
 	auditioning_alert_button.signal_clicked.connect (sigc::mem_fun(*this,&TransportBar::audition_alert_clicked));
 
 	/* alert box sub-group */
@@ -226,8 +206,6 @@ TransportBar::TransportBar ()
 
 	_cue_rec_enable.signal_clicked.connect(sigc::mem_fun(*this, &TransportBar::cue_rec_state_clicked));
 	_cue_play_enable.signal_clicked.connect(sigc::mem_fun(*this, &TransportBar::cue_ffwd_state_clicked));
-
-	LuaInstance::instance()->ActionChanged.connect (sigc::mem_fun (*this, &TransportBar::action_script_changed));
 
 	time_info_box = new TimeInfoBox ("ToolbarTimeInfo", false);
 
@@ -439,6 +417,8 @@ TransportBar::TransportBar ()
 
 	UIConfiguration::instance().ParameterChanged.connect (sigc::mem_fun (*this, &TransportBar::parameter_changed));
 
+	ARDOUR_UI::instance()->ActionsReady.connect (forever_connections, MISSING_INVALIDATOR, std::bind (&TransportBar::ui_actions_ready, this), gui_context ());
+
 	/*initialize */
 	repack_transport_hbox ();
 	update_clock_visibility ();
@@ -460,6 +440,66 @@ TransportBar::~TransportBar ()
 	delete time_info_box; time_info_box = 0;
 }
 
+void
+TransportBar::ui_actions_ready ()
+{
+	blink_connection = Timers::blink_connect (sigc::mem_fun(*this, &TransportBar::blink_handler));
+
+	point_zero_something_second_connection = Timers::super_rapid_connect (sigc::mem_fun(*this, &TransportBar::every_point_zero_something_seconds));
+
+	Glib::RefPtr<Action> act;
+
+	ActionManager::get_action (X_("Transport"), X_("ToggleExternalSync"));
+	sync_button.set_related_action (act);
+
+	act = ActionManager::get_action ("Transport", "TogglePunchIn");
+	punch_in_button.set_related_action (act);
+	act = ActionManager::get_action ("Transport", "TogglePunchOut");
+	punch_out_button.set_related_action (act);
+
+	act = ActionManager::get_action ("Main", "ToggleLatencyCompensation");
+	latency_disable_button.set_related_action (act);
+
+	act = ActionManager::get_action ("Transport", "ToggleAutoReturn");
+	auto_return_button.set_related_action (act);
+	act = ActionManager::get_action (X_("Transport"), X_("ToggleFollowEdits"));
+	follow_edits_button.set_related_action (act);
+
+	auto_return_button.set_text(_("Auto Return"));
+	follow_edits_button.set_text(_("Follow Range"));
+
+	/* CANNOT sigc::bind these to clicked or toggled, must use pressed or released */
+	act = ActionManager::get_action (X_("Main"), X_("cancel-solo"));
+	solo_alert_button.set_related_action (act);
+
+	act = ActionManager::get_action (X_("Monitor Section"), X_("monitor-dim-all"));
+	monitor_dim_button.set_related_action (act);
+	act = ActionManager::get_action (X_("Monitor Section"), X_("monitor-mono"));
+	monitor_mono_button.set_related_action (act);
+	act = ActionManager::get_action (X_("Monitor Section"), X_("monitor-cut-all"));
+	monitor_mute_button.set_related_action (act);
+
+	LuaInstance::instance()->ActionChanged.connect (sigc::mem_fun (*this, &TransportBar::action_script_changed));
+
+	for (int i = 0; i < MAX_LUA_ACTION_BUTTONS; ++i) {
+		std::string const a = string_compose (X_("script-%1"), i + 1);
+		Glib::RefPtr<Action> act = ActionManager::get_action(X_("LuaAction"), a.c_str());
+		assert (act);
+		action_script_call_btn[i].set_name ("lua action button");
+		action_script_call_btn[i].set_text (string_compose ("%1%2", std::hex, i+1));
+		action_script_call_btn[i].set_related_action (act);
+		action_script_call_btn[i].signal_button_press_event().connect (sigc::bind (sigc::mem_fun(*this, &TransportBar::bind_lua_action_script), i), false);
+		if (act->get_sensitive ()) {
+			action_script_call_btn[i].set_visual_state (Gtkmm2ext::VisualState (action_script_call_btn[i].visual_state() & ~Gtkmm2ext::Insensitive));
+		} else {
+			action_script_call_btn[i].set_visual_state (Gtkmm2ext::VisualState (action_script_call_btn[i].visual_state() | Gtkmm2ext::Insensitive));
+		}
+		action_script_call_btn[i].set_sizing_text ("88");
+		action_script_call_btn[i].set_no_show_all ();
+	}
+
+	repack_transport_hbox();
+}
 
 void
 TransportBar::repack_transport_hbox ()
@@ -815,39 +855,6 @@ TransportBar::set_session (Session *s)
 		_clear_editor_meter = true;
 		editor_meter_peak_display.signal_button_release_event().connect (sigc::mem_fun(*this, &TransportBar::editor_meter_peak_button_release), false);
 	}
-
-	//TODO : only do this once,  OR,  make a dedicated function for initializing actions after ARDOUR_UI, et al, have created them
-		blink_connection = Timers::blink_connect (sigc::mem_fun(*this, &TransportBar::blink_handler));
-
-		point_zero_something_second_connection = Timers::super_rapid_connect (sigc::mem_fun(*this, &TransportBar::every_point_zero_something_seconds));
-
-		Glib::RefPtr<Action> act;
-
-		act = ActionManager::get_action (X_("Monitor Section"), X_("monitor-dim-all"));
-		monitor_dim_button.set_related_action (act);
-		act = ActionManager::get_action (X_("Monitor Section"), X_("monitor-mono"));
-		monitor_mono_button.set_related_action (act);
-		act = ActionManager::get_action (X_("Monitor Section"), X_("monitor-cut-all"));
-		monitor_mute_button.set_related_action (act);
-
-		for (int i = 0; i < MAX_LUA_ACTION_BUTTONS; ++i) {
-			std::string const a = string_compose (X_("script-%1"), i + 1);
-			Glib::RefPtr<Action> act = ActionManager::get_action(X_("LuaAction"), a.c_str());
-			assert (act);
-			action_script_call_btn[i].set_name ("lua action button");
-			action_script_call_btn[i].set_text (string_compose ("%1%2", std::hex, i+1));
-			action_script_call_btn[i].set_related_action (act);
-			action_script_call_btn[i].signal_button_press_event().connect (sigc::bind (sigc::mem_fun(*this, &TransportBar::bind_lua_action_script), i), false);
-			if (act->get_sensitive ()) {
-				action_script_call_btn[i].set_visual_state (Gtkmm2ext::VisualState (action_script_call_btn[i].visual_state() & ~Gtkmm2ext::Insensitive));
-			} else {
-				action_script_call_btn[i].set_visual_state (Gtkmm2ext::VisualState (action_script_call_btn[i].visual_state() | Gtkmm2ext::Insensitive));
-			}
-			action_script_call_btn[i].set_sizing_text ("88");
-			action_script_call_btn[i].set_no_show_all ();
-		}
-
-	repack_transport_hbox();
 }
 
 void

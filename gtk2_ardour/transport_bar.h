@@ -203,6 +203,8 @@ private:
 	void blink_handler (bool);
 	sigc::connection blink_connection;
 
+	void ui_actions_ready();
+
 	PBD::ScopedConnectionList forever_connections;
 	sigc::connection point_zero_something_second_connection;
 
