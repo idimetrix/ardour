@@ -181,7 +181,7 @@
 #include "template_dialog.h"
 #include "time_axis_view_item.h"
 #include "timers.h"
-#include "transport_bar.h" //TODO: remove this and put in Rec/Edit/Mix/Cue
+#include "transport_bar.h"
 #include "transport_masters_dialog.h"
 #include "trigger_page.h"
 #include "triggerbox_ui.h"
@@ -297,6 +297,7 @@ ARDOUR_UI::ARDOUR_UI (int *argcp, char **argvp[], const char* localedir)
 	, _shared_popup_menu (0)
 	, _basic_ui (0)
 	, startup_fsm (0)
+	, transport_bar (0)
 	, error_alert_button ( ArdourButton::just_led_default_elements )
 	, _numpad_locate_happening (false)
 	, _session_is_new (false)
