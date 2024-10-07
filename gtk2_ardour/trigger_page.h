@@ -85,6 +85,8 @@ private:
 
 	void add_sidebar_page (std::string const&, Gtk::Widget&);
 
+	void tabbed_changed (bool);
+
 	bool strip_button_release_event (GdkEventButton*, TriggerStrip*);
 	bool no_strip_button_event (GdkEventButton*);
 	bool no_strip_drag_motion (Glib::RefPtr<Gdk::DragContext> const&, int, int, guint);
@@ -125,6 +127,8 @@ private:
 	CueBoxWidget       _cue_box;
 	FittedCanvasWidget _master_widget;
 	CueMaster          _master;
+
+	TransportBar*        _transport_bar;
 
 	SlotPropertiesBox _slot_prop_box;
 
