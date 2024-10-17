@@ -230,7 +230,7 @@ static const gchar *_rb_opt_strings[] = {
 #endif
 
 Editor::Editor ()
-	: PublicEditor (global_hpacker)
+	: PublicEditor (_content_vbox)
 	, editor_mixer_strip_width (Wide)
 	, constructed (false)
 	, _properties_box (0)
@@ -669,8 +669,6 @@ Editor::Editor ()
 	edit_pane.add (editor_summary_pane);
 	_editor_list_vbox.pack_start (_the_notebook);
 	_editor_list_vbox.pack_start (*_properties_box, false, false, 0);
-	edit_pane.add (_editor_list_vbox);
-	edit_pane.set_child_minsize (_editor_list_vbox, 30); /* rough guess at width of notebook tabs */
 
 	edit_pane.set_drag_cursor (*_cursors->expand_left_right);
 	editor_summary_pane.set_drag_cursor (*_cursors->expand_up_down);
@@ -701,10 +699,6 @@ Editor::Editor ()
 	epane_box->set_name("EditorWindow");
 	epane_box->add (edit_pane);
 
-	Gtk::EventBox* epane_box2 = manage (new EventBoxExt); // a themeable box
-	epane_box2->set_name("EditorWindow");
-	epane_box2->add (global_vpacker);
-
 	ArdourWidgets::ArdourDropShadow *toolbar_shadow = manage (new (ArdourWidgets::ArdourDropShadow));
 	toolbar_shadow->set_size_request (-1, 4);
 	toolbar_shadow->set_mode(ArdourWidgets::ArdourDropShadow::DropShadowBoth);
@@ -714,12 +708,18 @@ Editor::Editor ()
 	global_vpacker.pack_start (*toolbar_shadow, false, false);
 	global_vpacker.pack_start (*ebox, false, false);
 	global_vpacker.pack_start (*epane_box, true, true);
-	global_hpacker.pack_start (*epane_box2, true, true);
+
+
+	/* pack all the main pieces into appropriate containers from _tabbable
+	 */
+	_content_transport_ebox.add (*_transport_bar);
+	_content_list_ebox.add (_editor_list_vbox);
+	_content_innermost_ebox.add (global_vpacker);
 
 	/* need to show the "contents" widget so that notebook will show if tab is switched to
 	 */
 
-	global_hpacker.show ();
+	_content_hbox.show ();
 	ebox_hpacker.show();
 	ebox->show();
 
@@ -5526,7 +5526,7 @@ Editor::session_going_away ()
 
 	if (current_mixer_strip) {
 		if (current_mixer_strip->get_parent() != 0) {
-			global_hpacker.remove (*current_mixer_strip);
+			_content_strip_ebox.remove ();
 		}
 		delete current_mixer_strip;
 		current_mixer_strip = 0;

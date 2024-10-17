@@ -768,7 +768,6 @@ private:
 	void timeaxisview_deleted (TimeAxisView*);
 	void add_vcas (ARDOUR::VCAList&);
 
-	Gtk::HBox global_hpacker;
 	Gtk::VBox global_vpacker;
 
 	Gdk::Cursor* which_track_cursor () const;
