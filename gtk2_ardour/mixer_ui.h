@@ -210,7 +210,6 @@ private:
 	Gtk::Label            vca_label;
 	Gtk::EventBox         vca_scroller_base;
 	Gtk::HBox             out_packer;
-	ArdourWidgets::HPane  list_hpane;
 
 	Gtk::EventBox         _mixer_scene_spacer;
 	Gtk::Frame            _mixer_scene_frame;
