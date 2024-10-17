@@ -83,6 +83,7 @@ Tabbable::Tabbable (Gtk::Widget& w, const string& visible_name, string const & n
 	_content_inner_vbox.pack_start(_content_innermost_ebox, true, true);
 
 	_content_list_pane.set_child_minsize (_content_list_ebox, 160); /* rough guess at width of notebook tabs */
+	_content_list_pane.set_check_divider_position (true);
 
 	_content_vbox.show_all();
 }
@@ -387,6 +388,8 @@ Tabbable::get_state() const
 
 	node.set_property (X_("tabbed"),  tabbed());
 
+	node.set_property (string_compose("%1%2", _menu_name, X_("-listpane-pos")).c_str(), _content_list_pane.get_divider ());
+
 	return node;
 }
 
@@ -409,7 +412,15 @@ Tabbable::set_state (const XMLNode& node, int version)
 
 	if (window_node) {
 		window_node->get_property (X_("tabbed"), tab_requested_by_state);
+		float fract;
+		if ( window_node->get_property (string_compose("%1%2", _menu_name, X_("-listpane-pos")).c_str(), fract) ) {
+			if (fract > 0.75) {
+				fract = 0.75f;
+			}
+			_content_list_pane.set_divider (0, fract);
+		}
 	}
+
 
 	if (!_visible) {
 		if (tab_requested_by_state) {
