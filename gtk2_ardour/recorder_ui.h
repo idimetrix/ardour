@@ -127,7 +127,6 @@ private:
 	static int calc_columns (int child_width, int parent_width);
 
 	Gtkmm2ext::Bindings*  bindings;
-	Gtk::VBox            _content;
 	Gtk::HBox            _toolbar;
 	Gtk::Table           _button_table;
 	ArdourWidgets::VPane _pane;
@@ -154,7 +153,6 @@ private:
 	DurationInfoBox              _duration_info_box;
 	XrunInfoBox                  _xrun_info_box;
 	RemainInfoBox                _remain_info_box;
-	TransportBar                 *_transport_bar;
 	Glib::RefPtr<Gtk::SizeGroup> _toolbar_button_height;
 	Glib::RefPtr<Gtk::SizeGroup> _toolbar_recarm_width;
 	Glib::RefPtr<Gtk::SizeGroup> _toolbar_monitoring_width;
@@ -263,6 +261,8 @@ private:
 	Gtk::HBox                    _ruler_box;
 	ArdourWidgets::ArdourHSpacer _ruler_sep;
 	RecorderGroupTabs*           _rec_group_tabs;
+
+	TransportBar                 *_transport_bar;
 
 	InputPortMap                _input_ports;
 	std::list<TrackRecordAxis*> _recorders;
