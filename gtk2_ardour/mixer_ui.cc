@@ -133,7 +133,7 @@ Mixer_UI::instance ()
 }
 
 Mixer_UI::Mixer_UI ()
-	: Tabbable (_content, _("Mixer"), X_("mixer"))
+	: Tabbable (_content_vbox, _("Mixer"), X_("mixer"))
 	, plugin_search_clear_button (X_("Clear"))
 	, _mixer_scene_release (0)
 	, no_track_list_redisplay (false)
@@ -143,6 +143,7 @@ Mixer_UI::Mixer_UI ()
 	, _surround_strip (0)
 	, foldback_strip (0)
 	, _show_foldback_strip (true)
+	, _transport_bar (0)
 	, _strip_width (UIConfiguration::instance().get_default_narrow_ms() ? Narrow : Wide)
 	, _spill_scroll_position (0)
 	, ignore_track_reorder (false)
@@ -153,7 +154,6 @@ Mixer_UI::Mixer_UI ()
 	, _maximised (false)
 	, _strip_selection_change_without_scroll (false)
 	, _selection (*this, *this)
-	, _transport_bar (0)
 {
 
 	plugin_list_mode_strings = I18N (_plugin_list_mode_strings);
@@ -163,7 +163,8 @@ Mixer_UI::Mixer_UI ()
 	Glib::RefPtr<ToggleAction> fb_act = ActionManager::get_toggle_action ("Mixer", "ToggleFoldbackStrip");
 	fb_act->set_sensitive (false);
 
-	_content.set_data ("ardour-bindings", bindings);
+	_content_vbox.set_data ("ardour-bindings", bindings);
+
 	_transport_bar = manage(new TransportBar());
 	signal_tabbed_changed.connect (sigc::mem_fun (*this, &Mixer_UI::tabbed_changed));
 
@@ -379,27 +380,29 @@ Mixer_UI::Mixer_UI ()
 	global_hpacker.pack_start (inner_pane, true, true);
 	global_hpacker.pack_start (out_packer, false, false);
 
-	list_hpane.set_check_divider_position (true);
-	list_hpane.add (list_vpacker);
-	list_hpane.add (global_hpacker);
-	list_hpane.set_child_minsize (list_vpacker, 30);
+//	list_hpane.set_check_divider_position (true);
+//	list_hpane.add (list_vpacker);
+//	list_hpane.add (global_hpacker);
+//	list_hpane.set_child_minsize (list_vpacker, 30);
 
 	rhs_pane1.set_divider (0, .6);
 	rhs_pane2.set_divider (0, .7);
-	list_hpane.set_divider (0, .2);
+//	list_hpane.set_divider (0, .2);
 	inner_pane.set_divider (0, .8);
 
 	rhs_pane1.set_drag_cursor (*PublicEditor::instance().cursors()->expand_up_down);
 	rhs_pane2.set_drag_cursor (*PublicEditor::instance().cursors()->expand_up_down);
-	list_hpane.set_drag_cursor (*PublicEditor::instance().cursors()->expand_left_right);
+//	list_hpane.set_drag_cursor (*PublicEditor::instance().cursors()->expand_left_right);
 	inner_pane.set_drag_cursor (*PublicEditor::instance().cursors()->expand_left_right);
 
-	_content.pack_start (list_hpane, true, true);
+	_content_transport_ebox.add (*_transport_bar);
+	_content_list_ebox.add (list_vpacker);
+	_content_innermost_ebox.add (global_hpacker);
 
 	update_title ();
 
-	_content.show ();
-	_content.set_name ("MixerWindow");
+	_content_vbox.show ();
+	_content_vbox.set_name ("MixerWindow");
 
 	global_hpacker.show();
 	scroller.show();
@@ -1487,7 +1490,7 @@ Mixer_UI::stop_updating ()
 void
 Mixer_UI::fast_update_strips ()
 {
-	if (!UIConfiguration::instance().get_no_strobe() && _content.get_mapped () && _session) {
+	if (!UIConfiguration::instance().get_no_strobe() && _content_vbox.get_mapped () && _session) {
 		for (auto & s : strips) {
 			s->fast_update ();
 		}
@@ -3028,7 +3031,7 @@ Mixer_UI::strip_by_x (int x)
 	for (list<MixerStrip*>::iterator i = strips.begin(); i != strips.end(); ++i) {
 		int x1, x2, y;
 
-		(*i)->translate_coordinates (_content, 0, 0, x1, y);
+		(*i)->translate_coordinates (_content_vbox, 0, 0, x1, y);
 		x2 = x1 + (*i)->get_width();
 
 		if (x >= x1 && x <= x2) {
