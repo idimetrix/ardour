@@ -66,7 +66,7 @@ using namespace Gtk;
 using namespace std;
 
 TriggerPage::TriggerPage ()
-	: Tabbable (_content, _("Cues"), X_("trigger"))
+	: Tabbable (_content_vbox, _("Cues"), X_("trigger"))
 	, _cue_area_frame (0.5, 0, 1.0, 0)
 	, _cue_box (16, 16 * TriggerBox::default_triggers_per_box)
 	, _master_widget (16, 16)
@@ -129,15 +129,10 @@ TriggerPage::TriggerPage ()
 	_sidebar_notebook.popup_disable ();
 	_sidebar_notebook.set_tab_pos (Gtk::POS_RIGHT);
 
-	_sidebar_vbox.pack_start (_sidebar_notebook);
 	add_sidebar_page (_("Clips"), _trigger_clip_picker);
 	add_sidebar_page (_("Tracks"), _trigger_route_list.widget ());
 	add_sidebar_page (_("Sources"), _trigger_source_list.widget ());
 	add_sidebar_page (_("Regions"), _trigger_region_list.widget ());
-
-	/* Upper pane ([slot | strips] | file browser) */
-	_pane_upper.add (_strip_group_box);
-	_pane_upper.add (_sidebar_vbox);
 
 	_midi_editor = new MidiCueEditor;
 
@@ -158,12 +153,13 @@ TriggerPage::TriggerPage ()
 	_parameter_box.pack_start (*table);
 
 	/* Top-level Layout */
-	_content.add (_pane_upper);
-	_content.add (_parameter_box);
-	_content.show ();
+	_content_transport_ebox.add (*_transport_bar);
+	_content_innermost_ebox.add (_strip_group_box);
+	_content_list_ebox.add (_sidebar_notebook);
+	_content_props_ebox.add (_parameter_box);
+	_content_vbox.show ();
 
 	/* Show all */
-	_pane_upper.show ();
 	_strip_group_box.show ();
 	_strip_scroller.show ();
 	_strip_packer.show ();
@@ -173,7 +169,7 @@ TriggerPage::TriggerPage ()
 	_sidebar_notebook.show_all ();
 
 	/* setup keybidings */
-	_content.set_data ("ardour-bindings", bindings);
+	_content_vbox.set_data ("ardour-bindings", bindings);
 
 	/* subscribe to signals */
 	Config->ParameterChanged.connect (*this, invalidator (*this), std::bind (&TriggerPage::parameter_changed, this, _1), gui_context ());
@@ -181,14 +177,6 @@ TriggerPage::TriggerPage ()
 
 	/* init */
 	update_title ();
-
-	/* Restore pane state */
-	float          fract;
-	XMLNode const* settings = ARDOUR_UI::instance ()->trigger_page_settings ();
-	if (!settings || !settings->get_property ("triggerpage-hpane-pos", fract) || fract > 1.0) {
-		fract = 0.75f;
-	}
-	_pane_upper.set_divider (0, fract);
 }
 
 TriggerPage::~TriggerPage ()
@@ -225,7 +213,6 @@ TriggerPage::get_state () const
 	XMLNode* node = new XMLNode (X_("TriggerPage"));
 	node->add_child_nocopy (Tabbable::get_state ());
 
-	node->set_property (X_("triggerpage-hpane-pos"), _pane_upper.get_divider ());
 	node->set_property (X_("triggerpage-sidebar-page"), _sidebar_notebook.get_current_page ());
 
 	node->add_child_nocopy (_midi_editor->get_state());
@@ -831,7 +818,7 @@ TriggerPage::stop_updating ()
 void
 TriggerPage::fast_update_strips ()
 {
-	if (_content.get_mapped () && _session) {
+	if (_content_vbox.get_mapped () && _session) {
 		for (list<TriggerStrip*>::iterator i = _strips.begin (); i != _strips.end (); ++i) {
 			(*i)->fast_update ();
 		}

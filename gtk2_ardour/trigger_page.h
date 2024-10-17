@@ -107,9 +107,7 @@ private:
 	void fast_update_strips ();
 
 	Gtkmm2ext::Bindings* bindings;
-	ArdourWidgets::VPane _content;
 
-	ArdourWidgets::HPane _pane_upper;
 	Gtk::HBox            _strip_group_box;
 	Gtk::ScrolledWindow  _strip_scroller;
 	Gtk::HBox            _strip_packer;
@@ -117,7 +115,6 @@ private:
 	Gtk::Alignment       _cue_area_frame;
 	Gtk::VBox            _cue_area_box;
 	Gtk::HBox            _parameter_box;
-	Gtk::VBox            _sidebar_vbox;
 	Gtk::Notebook        _sidebar_notebook;
 	TriggerClipPicker    _trigger_clip_picker;
 	TriggerSourceList    _trigger_source_list;
