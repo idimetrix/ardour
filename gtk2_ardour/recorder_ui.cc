@@ -79,7 +79,7 @@ using namespace Menu_Helpers;
 #define PX_SCALE(px) std::max ((float)px, rintf ((float)px* UIConfiguration::instance ().get_ui_scale ()))
 
 RecorderUI::RecorderUI ()
-	: Tabbable (_content, _("Recorder"), X_("recorder"))
+	: Tabbable (_content_vbox, _("Recorder"), X_("recorder"))
 	, _toolbar_sep (1.0)
 	, _btn_rec_all (_("All"))
 	, _btn_rec_none (_("None"))
@@ -198,9 +198,10 @@ RecorderUI::RecorderUI ()
 	_pane.add (_meter_scroller);
 
 	/* Top-level VBox */
-	_content.pack_start (_toolbar_sep, false, false, 1);
-	_content.pack_start (_toolbar, false, false, 2);
-	_content.pack_start (_pane, true, true);
+	_content_transport_ebox.add (*_transport_bar);
+	//_content_list_ebox.add (_editor_list_vbox);  //TODO
+	_content_toolbar_ebox.add(_toolbar);
+	_content_innermost_ebox.add (_pane);
 
 	/* button_table setup is similar to transport_table in ardour_ui */
 	int vpadding = 1;
@@ -285,10 +286,10 @@ RecorderUI::RecorderUI ()
 	_meter_area.show ();
 	_meter_scroller.show ();
 	_pane.show ();
-	_content.show ();
+	_content_vbox.show ();
 
 	/* setup keybidings */
-	_content.set_data ("ardour-bindings", bindings);
+	_content_vbox.set_data ("ardour-bindings", bindings);
 
 	/* subscribe to signals */
 	AudioEngine::instance ()->Running.connect (_engine_connections, invalidator (*this), std::bind (&RecorderUI::start_updating, this), gui_context ());
