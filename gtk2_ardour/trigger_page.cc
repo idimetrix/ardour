@@ -178,14 +178,6 @@ TriggerPage::TriggerPage ()
 
 	/* init */
 	update_title ();
-
-	/* Restore pane state */
-	float          fract;
-	XMLNode const* settings = ARDOUR_UI::instance ()->trigger_page_settings ();
-	if (!settings || !settings->get_property ("triggerpage-hpane-pos", fract) || fract > 1.0) {
-		fract = 0.75f;
-	}
-	_pane_upper.set_divider (0, fract);
 }
 
 TriggerPage::~TriggerPage ()
@@ -222,7 +214,6 @@ TriggerPage::get_state () const
 	XMLNode* node = new XMLNode (X_("TriggerPage"));
 	node->add_child_nocopy (Tabbable::get_state ());
 
-	node->set_property (X_("triggerpage-hpane-pos"), _pane_upper.get_divider ());
 	node->set_property (X_("triggerpage-sidebar-page"), _sidebar_notebook.get_current_page ());
 
 	node->add_child_nocopy (_midi_editor->get_state());
