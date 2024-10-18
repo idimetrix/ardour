@@ -311,6 +311,8 @@ public:
 	MainClock* secondary_clock;  //this clock is the canonical SecondaryClock, whose mode is reflected to all other clocks with PrimaryClock disposition
 	AudioClock*   big_clock;
 
+	void focus_on_clock ();
+
 	VideoTimeLine *video_timeline;
 
 	void reset_main_clocks ();
