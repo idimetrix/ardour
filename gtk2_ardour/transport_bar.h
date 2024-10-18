@@ -44,6 +44,7 @@
 #include "widgets/ardour_dropdown.h"
 #include "widgets/ardour_spacer.h"
 
+#include "main_clock.h"
 #include "mini_timeline.h"
 #include "shuttle_control.h"
 #include "startup_fsm.h"
@@ -68,6 +69,8 @@ public:
 	~TransportBar();
 
 	void set_session (ARDOUR::Session *);
+
+	void focus_on_clock ();
 
 private:
 	Gtk::Table    transport_table;
@@ -126,8 +129,6 @@ private:
 
 	void latency_switch_changed ();
 	void session_latency_updated (bool);
-
-	void focus_on_clock ();
 
 	void update_clock_visibility ();
 

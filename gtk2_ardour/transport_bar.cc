@@ -478,6 +478,12 @@ TransportBar::latency_switch_changed ()
 }
 
 void
+TransportBar::focus_on_clock ()
+{
+	primary_clock.focus ();
+}
+
+void
 TransportBar::update_clock_visibility ()
 {
 	if (ARDOUR::Profile->get_small_screen()) {
