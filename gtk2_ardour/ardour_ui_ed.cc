@@ -69,6 +69,7 @@
 #include "luawindow.h"
 #include "mixer_ui.h"
 #include "recorder_ui.h"
+#include "transport_bar.h"
 #include "trigger_page.h"
 #include "window_manager.h"
 #include "global_port_matrix.h"
@@ -1053,8 +1054,8 @@ ARDOUR_UI::on_theme_changed ()
 void
 ARDOUR_UI::focus_on_clock ()
 {
-	if (primary_clock) {
-		primary_clock->focus ();
+	if (transport_bar) {
+		transport_bar->focus_on_clock ();
 	}
 }
 

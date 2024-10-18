@@ -538,6 +538,12 @@ TransportBar::set_session (Session *s)
 	session_latency_updated (true);
 
 	blink_connection = Timers::blink_connect (sigc::mem_fun(*this, &TransportBar::blink_handler));
+
+/*  TODO: separate actions for the Edit, Rec, Cue and Mix pages, to focus the appropriate clock (?)
+	act = ActionManager::register_action (transport_actions, X_("focus-on-clock"), _("Focus On Clock"), sigc::mem_fun(*this, &TransportBar::focus_on_clock));
+	ActionManager::session_sensitive_actions.push_back (act);
+	ActionManager::transport_sensitive_actions.push_back (act);
+*/
 }
 
 void
@@ -553,6 +559,12 @@ TransportBar::latency_switch_changed ()
 	if (latency_disable_button.get_active() != pdc_off) {
 		latency_disable_button.set_active (pdc_off);
 	}
+}
+
+void
+TransportBar::focus_on_clock ()
+{
+	primary_clock.focus ();
 }
 
 void
