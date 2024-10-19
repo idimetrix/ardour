@@ -935,14 +935,6 @@ TransportBar::set_session (Session *s)
 		_clear_editor_meter = true;
 		editor_meter_peak_display.signal_button_release_event().connect (sigc::mem_fun(*this, &TransportBar::editor_meter_peak_button_release), false);
 	}
-
-
-
-/*  TODO: separate actions for the Edit, Rec, Cue and Mix pages, to focus the appropriate clock (?)
-	act = ActionManager::register_action (transport_actions, X_("focus-on-clock"), _("Focus On Clock"), sigc::mem_fun(*this, &TransportBar::focus_on_clock));
-	ActionManager::session_sensitive_actions.push_back (act);
-	ActionManager::transport_sensitive_actions.push_back (act);
-*/
 }
 
 void
