@@ -104,8 +104,8 @@ RecorderUI::RecorderUI ()
 	register_actions ();
 
 	_transport_bar = manage(new TransportBar());
+	_transport_bar->show();
 
-	signal_tabbed_changed.connect (sigc::mem_fun (*this, &RecorderUI::tabbed_changed));
 
 	/* monitoring */
 	_auto_input_button.set_related_action (ActionManager::get_action ("Transport", "ToggleAutoInput"));
@@ -357,11 +357,6 @@ RecorderUI::use_own_window (bool and_fill_it)
 void
 RecorderUI::tabbed_changed (bool tabbed)
 {
-	if (tabbed) {
-		_transport_bar->hide ();
-	} else {
-		_transport_bar->show ();
-	}
 }
 
 XMLNode&
