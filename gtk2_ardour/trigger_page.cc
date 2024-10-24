@@ -77,7 +77,7 @@ TriggerPage::TriggerPage ()
 	register_actions ();
 
 	_transport_bar = manage(new TransportBar());
-	signal_tabbed_changed.connect (sigc::mem_fun (*this, &TriggerPage::tabbed_changed));
+	_transport_bar->show();
 
 	/* Match TriggerStrip::_name_button height */
 	ArdourButton* spacer = manage (new ArdourButton (ArdourButton::Text));
@@ -358,11 +358,6 @@ TriggerPage::add_sidebar_page (string const & name, Gtk::Widget& widget)
 void
 TriggerPage::tabbed_changed (bool tabbed)
 {
-	if (tabbed) {
-		_transport_bar->hide ();
-	} else {
-		_transport_bar->show ();
-	}
 }
 
 void
