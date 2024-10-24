@@ -65,7 +65,6 @@
 #include "main_clock.h"
 #include "mixer_ui.h"
 #include "recorder_ui.h"
-#include "transport_bar.h" //TODO: move to each window
 #include "trigger_page.h"
 #include "utils.h"
 #include "midi_tracer.h"
@@ -179,8 +178,6 @@ ARDOUR_UI::setup_transport ()
 	recorder_visibility_button.set_related_action (ActionManager::get_action (X_("Common"), X_("change-recorder-visibility")));
 	trigger_page_visibility_button.set_related_action (ActionManager::get_action (X_("Common"), X_("change-trigger-visibility")));
 
-	transport_bar = new TransportBar();
-
 	/* connect signals */
 	ARDOUR_UI::Clock.connect (sigc::bind (sigc::mem_fun (primary_clock, &MainClock::set), false));
 	ARDOUR_UI::Clock.connect (sigc::bind (sigc::mem_fun (secondary_clock, &MainClock::set), false));
@@ -269,9 +266,6 @@ ARDOUR_UI::setup_transport ()
 	int hpadding = 2;
 	int col = 0;
 #define TCOL col, col + 1
-
-	transport_table.attach (*transport_bar, TCOL, 0, 2 , EXPAND|FILL, EXPAND|FILL, 3, 0);
-	++col;
 
 	transport_table.attach (recorder_visibility_button,     TCOL, 0, 1 , FILL, SHRINK, hpadding, vpadding);
 	transport_table.attach (trigger_page_visibility_button, TCOL, 1, 2 , FILL, SHRINK, hpadding, vpadding);
