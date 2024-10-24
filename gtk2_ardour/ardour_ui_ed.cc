@@ -69,7 +69,6 @@
 #include "luawindow.h"
 #include "mixer_ui.h"
 #include "recorder_ui.h"
-#include "transport_bar.h"
 #include "trigger_page.h"
 #include "window_manager.h"
 #include "global_port_matrix.h"
@@ -1054,8 +1053,11 @@ ARDOUR_UI::on_theme_changed ()
 void
 ARDOUR_UI::focus_on_clock ()
 {
-	if (transport_bar) {
-		transport_bar->focus_on_clock ();
+//cast to a tabbable and call focus_on_clock to its clock
+
+	//somewhat hacky; _tab holds a widget which is not the Tabbable.  y not though?
+	if (editor->tabbed() && _tabs.get_current_page() == _tabs.page_num (editor->contents())) {
+//		editor->focus_on_clock ();
 	}
 }
 
