@@ -198,6 +198,18 @@ ARDOUR_UI::setup_transport ()
 
 	/* setup widget style/name */
 
+	editor_visibility_button.set_elements (ArdourButton::Element (ArdourButton::Text|ArdourButton::Body));
+	editor_visibility_button.set_icon (ArdourWidgets::ArdourIcon::TrackWaveform);
+
+	mixer_visibility_button.set_elements (ArdourButton::Element (ArdourButton::Text|ArdourButton::Body));
+	mixer_visibility_button.set_icon (ArdourWidgets::ArdourIcon::Mixer);
+
+	recorder_visibility_button.set_elements (ArdourButton::Element (ArdourButton::Text|ArdourButton::Body));
+	recorder_visibility_button.set_icon (ArdourWidgets::ArdourIcon::RecButton);
+
+	trigger_page_visibility_button.set_elements (ArdourButton::Element (ArdourButton::Text|ArdourButton::Body));
+	trigger_page_visibility_button.set_icon (ArdourWidgets::ArdourIcon::Meters);
+
 	editor_visibility_button.set_name (X_("page switch button"));
 	mixer_visibility_button.set_name (X_("page switch button"));
 	prefs_visibility_button.set_name (X_("page switch button"));
