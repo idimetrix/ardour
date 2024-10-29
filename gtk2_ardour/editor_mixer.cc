@@ -131,8 +131,7 @@ Editor::show_editor_mixer (bool yn)
 		}
 
 		if (current_mixer_strip && current_mixer_strip->get_parent() == 0) {
-			_content_hbox.pack_start (*current_mixer_strip, Gtk::PACK_SHRINK );
-			_content_hbox.reorder_child (*current_mixer_strip, 0);
+			_content_strip_ebox.add (*current_mixer_strip);
 			current_mixer_strip->show ();
 		}
 
@@ -145,7 +144,7 @@ Editor::show_editor_mixer (bool yn)
 
 		if (current_mixer_strip) {
 			if (current_mixer_strip->get_parent() != 0) {
-				_content_hbox.remove (*current_mixer_strip);
+				_content_strip_ebox.remove ();
 			}
 		}
 	}
