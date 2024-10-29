@@ -1253,6 +1253,8 @@ Editor::track_selection_changed ()
 
 	update_selection_markers ();
 	update_section_box ();
+
+	show_editor_mixer(!selection->tracks.empty());
 }
 
 void
