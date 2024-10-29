@@ -219,6 +219,9 @@ TriggerPage::get_state () const
 
 	node->add_child_nocopy (_midi_editor->get_state());
 
+	Glib::RefPtr<ToggleAction> act = ActionManager::get_toggle_action ("Cues", "ToggleTriggerList");
+	node->set_property ("show-trigger-list", act->get_active ());
+
 	return *node;
 }
 
@@ -233,6 +236,15 @@ TriggerPage::set_state (const XMLNode& node, int version)
 	XMLNode* mn = node.child (X_("MIDICueEditor"));
 	if (mn) {
 		_midi_editor->set_state (*mn, version);
+	}
+
+	bool yn = true;
+	node.get_property ("show-trigger-list", yn);
+	{
+		Glib::RefPtr<ToggleAction> tact = ActionManager::get_toggle_action (X_("Cues"), X_("ToggleTriggerList"));
+		/* do it twice to force the change */
+		tact->set_active (!yn);
+		tact->set_active (yn);
 	}
 
 	return Tabbable::set_state (node, version);
