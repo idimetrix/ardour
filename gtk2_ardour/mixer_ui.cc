@@ -2295,23 +2295,6 @@ Mixer_UI::route_group_property_changed (RouteGroup* group, const PropertyChange&
 }
 
 void
-Mixer_UI::toggle_mixer_list ()
-{
-	Glib::RefPtr<ToggleAction> act = ActionManager::get_toggle_action ("Mixer", "ToggleMixerList");
-	showhide_mixer_list (act->get_active());
-}
-
-void
-Mixer_UI::showhide_mixer_list (bool yn)
-{
-	if (yn) {
-		list_vpacker.show ();
-	} else {
-		list_vpacker.hide ();
-	}
-}
-
-void
 Mixer_UI::toggle_monitor_section ()
 {
 	Glib::RefPtr<ToggleAction> act = ActionManager::get_toggle_action ("Mixer", "ToggleMonitorSection");
@@ -3714,7 +3697,16 @@ Mixer_UI::register_actions ()
 	ActionManager::register_action (group, "toggle-midi-input-active", _("Toggle MIDI Input Active for Mixer-Selected Tracks/Busses"),
 	                           sigc::bind (sigc::mem_fun (*this, &Mixer_UI::toggle_midi_input_active), false));
 
-	ActionManager::register_toggle_action (group, X_("ToggleMixerList"), _("Mixer: Show Mixer List"), sigc::mem_fun (*this, &Mixer_UI::toggle_mixer_list));
+	/* attachments visibility (editor-mixer-strip, bottom properties, sidebar list) */
+
+	RefPtr<Action> act = ActionManager::register_toggle_action (group, "ToggleMixerList", _("(Mixer) Show Sidebar List"), sigc::mem_fun (*this, &Tabbable::list_button_toggled));
+	_list_attachment_button.set_related_action (act);
+
+	act = ActionManager::register_toggle_action (group, "ToggleMixerStrip", _("(Mixer) Show Sidebar Strip"), sigc::mem_fun (*this, &Tabbable::strip_button_toggled));
+	_strip_attachment_button.set_related_action (act);
+
+	act = ActionManager::register_toggle_action (group, "ToggleMixerProps", _("(Mixer) Show Properties Bottom"), sigc::mem_fun (*this, &Tabbable::props_button_toggled));
+	_prop_attachment_button.set_related_action (act);
 
 	ActionManager::register_toggle_action (group, X_("ToggleVCAPane"), _("Mixer: Show VCAs"), sigc::mem_fun (*this, &Mixer_UI::toggle_vcas));
 

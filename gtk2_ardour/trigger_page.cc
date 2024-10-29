@@ -820,6 +820,17 @@ TriggerPage::register_actions ()
 {
 	Glib::RefPtr<ActionGroup> trigger_actions = ActionManager::create_action_group (bindings, X_("Cues"));
 
+	/* attachments visibility (editor-mixer-strip, bottom properties, sidebar list) */
+
+	Glib::RefPtr<Action> act = ActionManager::register_toggle_action (trigger_actions, "ToggleTriggerList", _("(Cue Page) Show Sidebar List"), sigc::mem_fun (*this, &Tabbable::list_button_toggled));
+	_list_attachment_button.set_related_action (act);
+
+	act = ActionManager::register_toggle_action (trigger_actions, "ToggleTriggerStrip", _("(Cue Page) Show Sidebar Strip"), sigc::mem_fun (*this, &Tabbable::strip_button_toggled));
+	_strip_attachment_button.set_related_action (act);
+
+	act = ActionManager::register_toggle_action (trigger_actions, "ToggleTriggerProps", _("(Cue Page) Show Properties Bottom"), sigc::mem_fun (*this, &Tabbable::props_button_toggled));
+	_prop_attachment_button.set_related_action (act);
+
 	ActionManager::register_action (trigger_actions, "clear-trigger-slot", _("Clear Selected Slot"), sigc::mem_fun (*this, &TriggerPage::clear_selected_slot));
 	ActionManager::register_action (trigger_actions, "clear-trigger-slot-alt", _("Clear Selected Slot"), sigc::mem_fun (*this, &TriggerPage::clear_selected_slot));
 
