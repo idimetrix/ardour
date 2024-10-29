@@ -168,6 +168,9 @@ Mixer_UI::Mixer_UI ()
 	_transport_bar = manage(new TransportBar());
 	_transport_bar->show();
 
+	_strip_attachment_button.set_sensitive(false);
+	_prop_attachment_button.set_sensitive(false);
+
 	PresentationInfo::Change.connect (*this, invalidator (*this), std::bind (&Mixer_UI::presentation_info_changed, this, _1), gui_context());
 	Route::FanOut.connect (*this, invalidator (*this), std::bind (&Mixer_UI::fan_out, this, _1, false, true), gui_context());
 
