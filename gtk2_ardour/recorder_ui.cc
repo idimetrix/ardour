@@ -366,6 +366,14 @@ RecorderUI::get_state () const
 	return *node;
 }
 
+void
+RecorderUI::focus_on_clock()
+{
+	if (_transport_bar) {
+		_transport_bar->focus_on_clock();
+	}
+}
+
 int
 RecorderUI::set_state (const XMLNode& node, int version)
 {
