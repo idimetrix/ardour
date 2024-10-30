@@ -225,6 +225,14 @@ TriggerPage::get_state () const
 	return *node;
 }
 
+void
+TriggerPage::focus_on_clock()
+{
+	if (_transport_bar) {
+		_transport_bar->focus_on_clock();
+	}
+}
+
 int
 TriggerPage::set_state (const XMLNode& node, int version)
 {
