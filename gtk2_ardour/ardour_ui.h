@@ -561,7 +561,6 @@ private:
 	Gtk::Label io_latency_label;
 	Gtk::Label io_latency_value;
 
-	ShuttleControl     shuttle_box;
 	MiniTimeline       mini_timeline;
 	TimeInfoBox*       time_info_box;
 
@@ -571,7 +570,6 @@ private:
 
 	ArdourWidgets::ArdourButton auto_return_button;
 	ArdourWidgets::ArdourButton follow_edits_button;
-	ArdourWidgets::ArdourButton sync_button;
 
 	ArdourWidgets::ArdourButton auditioning_alert_button;
 	ArdourWidgets::ArdourButton solo_alert_button;
@@ -595,7 +593,6 @@ private:
 
 	void cancel_solo ();
 	void solo_blink (bool);
-	void sync_blink (bool);
 	void audition_blink (bool);
 	void feedback_blink (bool);
 	void error_blink (bool);
@@ -871,7 +868,6 @@ private:
 	int ambiguous_file (std::string file, std::vector<std::string> hits);
 
 	bool click_button_clicked (GdkEventButton *);
-	bool sync_button_clicked (GdkEventButton *);
 
 	VisibilityGroup _status_bar_visibility;
 
