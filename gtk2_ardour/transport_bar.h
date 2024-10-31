@@ -80,11 +80,20 @@ private:
 
 	ArdourWidgets::ArdourButton sync_button;
 
+	Gtk::Label   punch_space;
+
+	ArdourWidgets::ArdourButton   punch_in_button;
+	ArdourWidgets::ArdourButton   punch_out_button;
+	ArdourWidgets::ArdourDropdown record_mode_selector;
+	std::vector<std::string> record_mode_strings;
+
 	Gtk::Label   punch_label;
 	Gtk::Label   layered_label;
 
 	//button actions
 	bool sync_button_clicked (GdkEventButton *);
+
+	void set_record_mode (ARDOUR::RecordMode);
 
 	void parameter_changed (std::string);
 

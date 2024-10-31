@@ -61,6 +61,7 @@
 #include "gtkmm2ext/application.h"
 #include "gtkmm2ext/bindings.h"
 #include "gtkmm2ext/gtk_ui.h"
+#include "gtkmm2ext/menu_elems.h"
 #include "gtkmm2ext/utils.h"
 #include "gtkmm2ext/window_title.h"
 
@@ -112,6 +113,7 @@ using namespace Gtkmm2ext;
 using namespace ArdourWidgets;
 using namespace Gtk;
 using namespace std;
+using namespace Gtk::Menu_Helpers;
 
 static const gchar *_record_mode_strings[] = {
 	N_("Layered"),
@@ -125,6 +127,8 @@ static const gchar *_record_mode_strings[] = {
 TransportBar::TransportBar ()
 	: _basic_ui (0)
 {
+	record_mode_strings = I18N (_record_mode_strings);
+
 	transport_ctrl.setup (ARDOUR_UI::instance ());
 	transport_ctrl.map_actions ();
 
@@ -145,6 +149,19 @@ TransportBar::TransportBar ()
 	punch_label.set_text (_("Punch:"));
 	layered_label.set_text (_("Rec:"));
 
+	punch_in_button.set_text (S_("Punch|In"));
+	punch_out_button.set_text (S_("Punch|Out"));
+
+	record_mode_selector.AddMenuElem (MenuElem (record_mode_strings[(int)RecLayered], sigc::bind (sigc::mem_fun (*this, &TransportBar::set_record_mode), RecLayered)));
+	record_mode_selector.AddMenuElem (MenuElem (record_mode_strings[(int)RecNonLayered], sigc::bind (sigc::mem_fun (*this, &TransportBar::set_record_mode), RecNonLayered)));
+	record_mode_selector.AddMenuElem (MenuElem (record_mode_strings[(int)RecSoundOnSound], sigc::bind (sigc::mem_fun (*this, &TransportBar::set_record_mode), RecSoundOnSound)));
+	record_mode_selector.set_sizing_texts (record_mode_strings);
+
+	act = ActionManager::get_action ("Transport", "TogglePunchIn");
+	punch_in_button.set_related_action (act);
+	act = ActionManager::get_action ("Transport", "TogglePunchOut");
+	punch_out_button.set_related_action (act);
+
 	int vpadding = 1;
 	int hpadding = 2;
 	int col = 0;
@@ -161,6 +178,12 @@ TransportBar::TransportBar ()
 	transport_table.attach (layered_label, TCOL, 1, 2 , FILL, SHRINK, 3, 0);
 	++col;
 
+	transport_table.attach (punch_in_button,      col,      col + 1, 0, 1 , FILL, SHRINK, hpadding, vpadding);
+	transport_table.attach (punch_space,          col + 1,  col + 2, 0, 1 , FILL, SHRINK, 0, vpadding);
+	transport_table.attach (punch_out_button,     col + 2,  col + 3, 0, 1 , FILL, SHRINK, hpadding, vpadding);
+	transport_table.attach (record_mode_selector, col,      col + 3, 1, 2 , FILL, SHRINK, hpadding, vpadding);
+	col += 3;
+
 	transport_table.set_spacings (0);
 	transport_table.set_row_spacings (4);
 	transport_table.set_border_width (1);
@@ -170,9 +193,25 @@ TransportBar::TransportBar ()
 	/*sizing */
 	Glib::RefPtr<SizeGroup> button_height_size_group = SizeGroup::create (Gtk::SIZE_GROUP_VERTICAL);
 	button_height_size_group->add_widget (sync_button);
+	button_height_size_group->add_widget (punch_in_button);
+	button_height_size_group->add_widget (punch_out_button);
+	button_height_size_group->add_widget (record_mode_selector);
+
+	Glib::RefPtr<SizeGroup> punch_button_size_group = SizeGroup::create (Gtk::SIZE_GROUP_HORIZONTAL);
+	punch_button_size_group->add_widget (punch_in_button);
+	punch_button_size_group->add_widget (punch_out_button);
+
+
+	/* tooltips */
+	Gtkmm2ext::UI::instance()->set_tip (punch_in_button, _("Start recording at auto-punch start"));
+	Gtkmm2ext::UI::instance()->set_tip (punch_out_button, _("Stop recording at auto-punch end"));
+	Gtkmm2ext::UI::instance()->set_tip (record_mode_selector, _("<b>Layered</b>, new recordings will be added as regions on a layer atop existing regions.\n<b>SoundOnSound</b>, behaves like <i>Layered</i>, except underlying regions will be audible.\n<b>Non Layered</b>, the underlying region will be spliced and replaced with the newly recorded region."));
 
 	/* theming */
 	sync_button.set_name ("transport active option button");
+	punch_in_button.set_name ("punch button");
+	punch_out_button.set_name ("punch button");
+	record_mode_selector.set_name ("record mode button");
 
 	/*initialize */
 	repack_transport_hbox ();
@@ -233,14 +272,14 @@ TransportBar::repack_transport_hbox ()
 		layered_label.show ();
 //		punch_in_button.show ();
 //		punch_out_button.show ();
-//		record_mode_selector.show ();
+		record_mode_selector.show ();
 //		recpunch_spacer.show ();
 	} else {
 		punch_label.hide ();
 		layered_label.hide ();
 //		punch_in_button.hide ();
 //		punch_out_button.hide ();
-//		record_mode_selector.hide ();
+		record_mode_selector.hide ();
 //		recpunch_spacer.hide ();
 	}
 
@@ -309,6 +348,11 @@ TransportBar::set_session (Session *s)
 
 	_session->AuditionActive.connect (_session_connections, MISSING_INVALIDATOR, std::bind (&TransportBar::auditioning_changed, this, _1), gui_context());
 	_session->TransportStateChange.connect (_session_connections, MISSING_INVALIDATOR, std::bind (&TransportBar::map_transport_state, this), gui_context());
+	_session->config.ParameterChanged.connect (_session_connections, MISSING_INVALIDATOR, std::bind (&TransportBar::parameter_changed, this, _1), gui_context());
+
+	//initialize all session config settings
+	std::function<void (std::string)> pc (std::bind (&TransportBar::parameter_changed, this, _1));
+	_session->config.map_parameters (pc);
 
 	blink_connection = Timers::blink_connect (sigc::mem_fun(*this, &TransportBar::blink_handler));
 }
@@ -342,14 +386,11 @@ void
 TransportBar::parameter_changed (std::string p)
 {
 	if (p == "external-sync") {
-
 		if (!_session->config.get_external_sync()) {
 			sync_button.set_text (S_("SyncSource|Int."));
 		} else {
 		}
-
 	} else if (p == "sync-source") {
-
 		if (_session) {
 			if (!_session->config.get_external_sync()) {
 				sync_button.set_text (S_("SyncSource|Int."));
@@ -360,7 +401,6 @@ TransportBar::parameter_changed (std::string p)
 			/* changing sync source without a session is unlikely/impossible , except during startup */
 			sync_button.set_text (TransportMasterManager::instance().current()->display_name());
 		}
-
 //		synchronize_sync_source_and_video_pullup ();
 //		set_fps_timeout_connection ();
 
@@ -420,8 +460,8 @@ TransportBar::parameter_changed (std::string p)
 //		_cue_play_enable.set_active (cb & ARDOUR::FollowCues);
 	} else if (p == "record-mode") {
 		size_t m = _session->config.get_record_mode ();
-//		assert (m < record_mode_strings.size ());
-//		record_mode_selector.set_active (record_mode_strings[m]);
+		assert (m < record_mode_strings.size ());
+		record_mode_selector.set_active (record_mode_strings[m]);
 	} else if (p == "no-strobe") {
 //		stop_clocking ();
 //		start_clocking ();
@@ -440,6 +480,14 @@ TransportBar::sync_button_clicked (GdkEventButton* ev)
 	Glib::RefPtr<ToggleAction> tact = ActionManager::get_toggle_action ("Window", "toggle-transport-masters");
 	tact->set_active();
 	return true;
+}
+
+void
+TransportBar::set_record_mode (RecordMode m)
+{
+	if (_session) {
+		_session->config.set_record_mode (m);
+	}
 }
 
 void
@@ -486,7 +534,7 @@ TransportBar::map_transport_state ()
 {
 	shuttle_box.map_transport_state ();
 
-/*	if (!_session) {
+	if (!_session) {
 		record_mode_selector.set_sensitive (false);
 		return;
 	}
@@ -497,8 +545,7 @@ TransportBar::map_transport_state ()
 		record_mode_selector.set_sensitive (!_session->actively_recording ());
 	} else {
 		record_mode_selector.set_sensitive (true);
-		update_disk_space ();
+//		update_disk_space ();
 	}
 
-*/
 }
