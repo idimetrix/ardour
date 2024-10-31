@@ -75,4 +75,25 @@ private:
 	BasicUI*      _basic_ui;
 
 	TransportControlUI transport_ctrl;
+
+	ShuttleControl     shuttle_box;
+
+	ArdourWidgets::ArdourButton sync_button;
+
+	//button actions
+	bool sync_button_clicked (GdkEventButton *);
+
+	void parameter_changed (std::string);
+
+	void map_transport_state ();
+
+	void set_transport_sensitivity (bool);
+
+	void auditioning_changed (bool);
+	void _auditioning_changed (bool);
+
+	/* blinking alerts */
+	void sync_blink (bool);
+	void blink_handler (bool);
+	sigc::connection blink_connection;
 };
