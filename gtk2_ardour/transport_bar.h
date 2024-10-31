@@ -50,6 +50,7 @@
 #include "startup_fsm.h"
 #include "transport_control.h"
 #include "transport_control_ui.h"
+#include "main_clock.h"
 #include "visibility_group.h"
 #include "window_manager.h"
 
@@ -111,6 +112,14 @@ private:
 
 	ArdourWidgets::ArdourVSpacer* secondary_clock_spacer;
 
+	ArdourWidgets::ArdourButton auditioning_alert_button;
+	ArdourWidgets::ArdourButton solo_alert_button;
+	ArdourWidgets::ArdourButton feedback_alert_button;
+
+	Gtk::VBox alert_box;
+
+	ArdourWidgets::ArdourVSpacer monitor_spacer;
+
 	//button actions
 	bool sync_button_clicked (GdkEventButton *);
 
@@ -124,13 +133,26 @@ private:
 
 	void set_transport_sensitivity (bool);
 
-	void auditioning_changed (bool);
-	void _auditioning_changed (bool);
-
 	void latency_switch_changed ();
 	void session_latency_updated (bool);
 
 	void update_clock_visibility ();
+
+	void solo_blink (bool);
+	void audition_blink (bool);
+	void feedback_blink (bool);
+
+	void soloing_changed (bool);
+	void auditioning_changed (bool);
+	void _auditioning_changed (bool);
+
+	void feedback_detected ();
+	void successful_graph_sort ();
+	bool _feedback_exists;
+	bool _ambiguous_latency;
+
+	bool solo_alert_press (GdkEventButton* ev);
+	void audition_alert_clicked ();
 
 	/* blinking alerts */
 	void sync_blink (bool);

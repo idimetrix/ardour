@@ -132,6 +132,10 @@ TransportBar::TransportBar ()
 	, primary_clock  (X_("primary"),   X_("transport"), MainClock::PrimaryClock)
 	, secondary_clock (X_("secondary"), X_("secondary"), MainClock::SecondaryClock)
 	, secondary_clock_spacer (0)
+	, auditioning_alert_button (_("Audition"))
+	, solo_alert_button (_("Solo"))
+	, feedback_alert_button (_("Feedback"))
+	, _feedback_exists (false)
 {
 	record_mode_strings = I18N (_record_mode_strings);
 
@@ -184,6 +188,20 @@ TransportBar::TransportBar ()
 
 	auto_return_button.set_text(_("Auto Return"));
 	follow_edits_button.set_text(_("Follow Range"));
+
+	/* CANNOT sigc::bind these to clicked or toggled, must use pressed or released */
+	act = ActionManager::get_action (X_("Main"), X_("cancel-solo"));
+	solo_alert_button.set_related_action (act);
+	auditioning_alert_button.signal_clicked.connect (sigc::mem_fun(*this,&TransportBar::audition_alert_clicked));
+
+	/* alert box sub-group */
+	VBox* alert_box = manage (new VBox);
+	alert_box->set_homogeneous (true);
+	alert_box->set_spacing (1);
+	alert_box->set_border_width (0);
+	alert_box->pack_start (solo_alert_button, true, true);
+	alert_box->pack_start (auditioning_alert_button, true, true);
+	alert_box->pack_start (feedback_alert_button, true, true);
 
 	int vpadding = 1;
 	int hpadding = 2;
@@ -252,6 +270,13 @@ TransportBar::TransportBar ()
 		++col;
 	}
 
+	transport_table.attach (*alert_box, TCOL, 0, 2, SHRINK, EXPAND|FILL, hpadding, 0);
+	++col;
+
+	transport_table.attach (monitor_spacer, TCOL, 0, 2 , SHRINK, EXPAND|FILL, 3, 0);
+	++col;
+
+
 	transport_table.set_spacings (0);
 	transport_table.set_row_spacings (4);
 	transport_table.set_border_width (1);
@@ -295,6 +320,9 @@ TransportBar::TransportBar ()
 	Gtkmm2ext::UI::instance()->set_tip (follow_edits_button, _("Playhead follows Range tool clicks, and Range selections"));
 	Gtkmm2ext::UI::instance()->set_tip (primary_clock, _("<b>Primary Clock</b> right-click to set display mode. Click to edit, click+drag a digit or mouse-over+scroll wheel to modify.\nText edits: right-to-left overwrite <tt>Esc</tt>: cancel; <tt>Enter</tt>: confirm; postfix the edit with '+' or '-' to enter delta times.\n"));
 	Gtkmm2ext::UI::instance()->set_tip (secondary_clock, _("<b>Secondary Clock</b> right-click to set display mode. Click to edit, click+drag a digit or mouse-over+scroll wheel to modify.\nText edits: right-to-left overwrite <tt>Esc</tt>: cancel; <tt>Enter</tt>: confirm; postfix the edit with '+' or '-' to enter delta times.\n"));
+	Gtkmm2ext::UI::instance()->set_tip (solo_alert_button, _("When active, something is soloed.\nClick to de-solo everything"));
+	Gtkmm2ext::UI::instance()->set_tip (auditioning_alert_button, _("When active, auditioning is taking place.\nClick to stop the audition"));
+	Gtkmm2ext::UI::instance()->set_tip (feedback_alert_button, _("When lit, there is a ports connection issue, leading to feedback loop or ambiguous alignment.\nThis is caused by connecting an output back to some input (feedback), or by multiple connections from a source to the same output via different paths (ambiguous latency, record alignment)."));
 
 
 	/* theme-ing */
@@ -305,9 +333,25 @@ TransportBar::TransportBar ()
 	latency_disable_button.set_name ("latency button");
 	auto_return_button.set_name ("transport option button");
 	follow_edits_button.set_name ("transport option button");
+	solo_alert_button.set_name ("rude solo");
+	auditioning_alert_button.set_name ("rude audition");
+	feedback_alert_button.set_name ("feedback alert");
+
+	solo_alert_button.set_elements (ArdourButton::Element(ArdourButton::Body|ArdourButton::Text));
+	auditioning_alert_button.set_elements (ArdourButton::Element(ArdourButton::Body|ArdourButton::Text));
+	feedback_alert_button.set_elements (ArdourButton::Element(ArdourButton::Body|ArdourButton::Text));
+
+	solo_alert_button.set_layout_font (UIConfiguration::instance().get_SmallerFont());
+	auditioning_alert_button.set_layout_font (UIConfiguration::instance().get_SmallerFont());
+	feedback_alert_button.set_layout_font (UIConfiguration::instance().get_SmallerFont());
+
+	feedback_alert_button.set_sizing_text (_("Facdbeek")); //< longest of "Feedback" and "No Align"
+
 
 	/* indicate global latency compensation en/disable */
 	ARDOUR::Latent::DisableSwitchChanged.connect (forever_connections, MISSING_INVALIDATOR, std::bind (&TransportBar::latency_switch_changed, this), gui_context ());
+	ARDOUR::Session::FeedbackDetected.connect (forever_connections, MISSING_INVALIDATOR, std::bind (&TransportBar::feedback_detected, this), gui_context ());
+	ARDOUR::Session::SuccessfulGraphSort.connect (forever_connections, MISSING_INVALIDATOR, std::bind (&TransportBar::successful_graph_sort, this), gui_context ());
 
 	/*initialize */
 	repack_transport_hbox ();
@@ -315,6 +359,12 @@ TransportBar::TransportBar ()
 	set_transport_sensitivity (false);
 	latency_switch_changed ();
 	session_latency_updated (true);
+
+	/* desensitize */
+	feedback_alert_button.set_sensitive (false);
+	feedback_alert_button.set_visual_state (Gtkmm2ext::NoVisualState);
+	auditioning_alert_button.set_sensitive (false);
+	auditioning_alert_button.set_visual_state (Gtkmm2ext::NoVisualState);
 }
 #undef PX_SCALE
 #undef TCOL
@@ -425,6 +475,113 @@ TransportBar::repack_transport_hbox ()
 }
 
 void
+TransportBar::feedback_detected ()
+{
+	_feedback_exists = true;
+}
+
+void
+TransportBar::successful_graph_sort ()
+{
+	_feedback_exists = false;
+}
+
+void
+TransportBar::soloing_changed (bool onoff)
+{
+	if (solo_alert_button.get_active() != onoff) {
+		solo_alert_button.set_active (onoff);
+	}
+}
+
+void
+TransportBar::_auditioning_changed (bool onoff)
+{
+	auditioning_alert_button.set_active (onoff);
+	auditioning_alert_button.set_sensitive (onoff);
+	if (!onoff) {
+		auditioning_alert_button.set_visual_state (Gtkmm2ext::NoVisualState);
+	}
+	set_transport_sensitivity (!onoff);
+}
+
+void
+TransportBar::auditioning_changed (bool onoff)
+{
+	UI::instance()->call_slot (MISSING_INVALIDATOR, std::bind (&TransportBar::_auditioning_changed, this, onoff));
+}
+
+void
+TransportBar::audition_alert_clicked ()
+{
+	if (_session) {
+		_session->cancel_audition();
+	}
+}
+
+void
+TransportBar::solo_blink (bool onoff)
+{
+	if (_session == 0) {
+		return;
+	}
+
+	if (_session->soloing() || _session->listening()) {
+		if (onoff) {
+			solo_alert_button.set_active (true);
+		} else {
+			solo_alert_button.set_active (false);
+		}
+	} else {
+		solo_alert_button.set_active (false);
+	}
+}
+
+void
+TransportBar::audition_blink (bool onoff)
+{
+	if (_session == 0) {
+		return;
+	}
+
+	if (_session->is_auditioning()) {
+		if (onoff) {
+			auditioning_alert_button.set_active (true);
+		} else {
+			auditioning_alert_button.set_active (false);
+		}
+	} else {
+		auditioning_alert_button.set_active (false);
+	}
+}
+
+void
+TransportBar::feedback_blink (bool onoff)
+{
+	if (_feedback_exists) {
+		feedback_alert_button.set_active (true);
+		feedback_alert_button.set_text (_("Feedback"));
+		if (onoff) {
+			feedback_alert_button.reset_fixed_colors ();
+		} else {
+			feedback_alert_button.set_active_color (UIConfigurationBase::instance().color ("feedback alert: alt active", NULL));
+		}
+	} else if (_ambiguous_latency && !UIConfiguration::instance().get_show_toolbar_latency ()) {
+		feedback_alert_button.set_text (_("No Align"));
+		feedback_alert_button.set_active (true);
+		if (onoff) {
+			feedback_alert_button.reset_fixed_colors ();
+		} else {
+			feedback_alert_button.set_active_color (UIConfigurationBase::instance().color ("feedback alert: alt active", NULL));
+		}
+	} else {
+		feedback_alert_button.set_text (_("Feedback"));
+		feedback_alert_button.reset_fixed_colors ();
+		feedback_alert_button.set_active (false);
+	}
+}
+
+void
 TransportBar::set_session (Session *s)
 {
 	SessionHandlePtr::set_session (s);
@@ -451,6 +608,8 @@ TransportBar::set_session (Session *s)
 	_session->TransportStateChange.connect (_session_connections, MISSING_INVALIDATOR, std::bind (&TransportBar::map_transport_state, this), gui_context());
 	_session->config.ParameterChanged.connect (_session_connections, MISSING_INVALIDATOR, std::bind (&TransportBar::parameter_changed, this, _1), gui_context());
 	_session->LatencyUpdated.connect (_session_connections, MISSING_INVALIDATOR, std::bind (&TransportBar::session_latency_updated, this, _1), gui_context());
+	_session->SoloActive.connect (_session_connections, MISSING_INVALIDATOR, std::bind (&TransportBar::soloing_changed, this, _1), gui_context());
+	_session->AuditionActive.connect (_session_connections, MISSING_INVALIDATOR, std::bind (&TransportBar::auditioning_changed, this, _1), gui_context());
 
 	//initialize all session config settings
 	std::function<void (std::string)> pc (std::bind (&TransportBar::parameter_changed, this, _1));
@@ -458,6 +617,8 @@ TransportBar::set_session (Session *s)
 
 	/* initialize */
 	session_latency_updated (true);
+
+	solo_alert_button.set_active (_session->soloing());
 
 	blink_connection = Timers::blink_connect (sigc::mem_fun(*this, &TransportBar::blink_handler));
 }
@@ -522,33 +683,14 @@ TransportBar::session_latency_updated (bool for_playback)
 		route_latency_value.set_text (samples_as_time_string (wrl, rate));
 
 		if (_session->engine().check_for_ambiguous_latency (true)) {
-//			_ambiguous_latency = true;
+			_ambiguous_latency = true;
 			io_latency_value.set_markup ("<span background=\"red\" foreground=\"white\">ambiguous</span>");
 		} else {
-//			_ambiguous_latency = false;
+			_ambiguous_latency = false;
 			io_latency_value.set_text (samples_as_time_string (iol, rate));
 		}
 	}
 }
-
-
-void
-TransportBar::_auditioning_changed (bool onoff)
-{
-//	auditioning_alert_button.set_active (onoff);
-//	auditioning_alert_button.set_sensitive (onoff);
-//	if (!onoff) {
-//		auditioning_alert_button.set_visual_state (Gtkmm2ext::NoVisualState);
-//	}
-	set_transport_sensitivity (!onoff);
-}
-
-void
-TransportBar::auditioning_changed (bool onoff)
-{
-	UI::instance()->call_slot (MISSING_INVALIDATOR, std::bind (&TransportBar::_auditioning_changed, this, onoff));
-}
-
 
 void
 TransportBar::parameter_changed (std::string p)
@@ -682,15 +824,12 @@ TransportBar::blink_handler (bool blink_on)
 {
 	sync_blink (blink_on);
 
-#if 0
 	if (UIConfiguration::instance().get_no_strobe() || !UIConfiguration::instance().get_blink_alert_indicators()) {
 		blink_on = true;
 	}
-	error_blink (blink_on);
 	solo_blink (blink_on);
 	audition_blink (blink_on);
 	feedback_blink (blink_on);
-#endif
 }
 
 void
