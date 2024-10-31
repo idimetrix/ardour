@@ -82,13 +82,23 @@ private:
 
 	Gtk::Label   punch_space;
 
+	ArdourWidgets::ArdourVSpacer recpunch_spacer;
+
+	Gtk::Label   punch_label;
 	ArdourWidgets::ArdourButton   punch_in_button;
 	ArdourWidgets::ArdourButton   punch_out_button;
+
+	Gtk::Label   layered_label;
 	ArdourWidgets::ArdourDropdown record_mode_selector;
 	std::vector<std::string> record_mode_strings;
 
-	Gtk::Label   punch_label;
-	Gtk::Label   layered_label;
+	ArdourWidgets::ArdourVSpacer latency_spacer;
+
+	ArdourWidgets::ArdourButton latency_disable_button;
+
+	Gtk::Label route_latency_value;
+	Gtk::Label io_latency_label;
+	Gtk::Label io_latency_value;
 
 	//button actions
 	bool sync_button_clicked (GdkEventButton *);
@@ -106,8 +116,13 @@ private:
 	void auditioning_changed (bool);
 	void _auditioning_changed (bool);
 
+	void latency_switch_changed ();
+	void session_latency_updated (bool);
+
 	/* blinking alerts */
 	void sync_blink (bool);
 	void blink_handler (bool);
 	sigc::connection blink_connection;
+
+	PBD::ScopedConnectionList forever_connections;
 };
