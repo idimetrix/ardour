@@ -527,8 +527,6 @@ private:
 
 	TransportBar *transport_bar;
 
-	ArdourWidgets::ArdourVSpacer recpunch_spacer;
-	ArdourWidgets::ArdourVSpacer latency_spacer;
 	ArdourWidgets::ArdourVSpacer monitor_spacer;
 	ArdourWidgets::ArdourVSpacer scripts_spacer;
 	ArdourWidgets::ArdourVSpacer cuectrl_spacer;
@@ -541,15 +539,8 @@ private:
 	void toggle_time_master ();
 	void toggle_video_sync ();
 
-
-	ArdourWidgets::ArdourButton latency_disable_button;
-
 	ArdourWidgets::ArdourButton  _cue_rec_enable;
 	ArdourWidgets::ArdourButton  _cue_play_enable;
-
-	Gtk::Label route_latency_value;
-	Gtk::Label io_latency_label;
-	Gtk::Label io_latency_value;
 
 	MiniTimeline       mini_timeline;
 	TimeInfoBox*       time_info_box;
@@ -864,8 +855,6 @@ private:
 
 	void toggle_latency_switch ();
 	void latency_switch_changed ();
-	void session_latency_updated (bool);
-
 	void feedback_detected ();
 
 	ArdourWidgets::ArdourButton             midi_panic_button;
