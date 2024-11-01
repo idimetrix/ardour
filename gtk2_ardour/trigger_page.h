@@ -110,6 +110,8 @@ private:
 
 	Gtkmm2ext::Bindings* bindings;
 
+	Gtk::HBox        _content;
+
 	Gtk::HBox            _strip_group_box;
 	Gtk::ScrolledWindow  _strip_scroller;
 	Gtk::HBox            _strip_packer;

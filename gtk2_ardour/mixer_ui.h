@@ -183,6 +183,8 @@ private:
 	Mixer_UI ();
 	static Mixer_UI*     _instance;
 
+	Gtk::HBox         _content;
+
 	Gtk::HBox             global_hpacker;
 	Gtk::VBox             global_vpacker;
 	Gtk::ScrolledWindow   scroller;

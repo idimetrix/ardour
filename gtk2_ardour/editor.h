@@ -785,6 +785,8 @@ private:
 	void parameter_changed (std::string);
 	void ui_parameter_changed (std::string);
 
+	Gtk::HBox            _content;
+
 	TransportBar*            _transport_bar;
 
 	Gtk::EventBox            time_bars_event_box;
