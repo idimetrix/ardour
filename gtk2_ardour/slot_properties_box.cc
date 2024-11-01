@@ -768,7 +768,7 @@ SlotPropertyWindow::SlotPropertyWindow (TriggerReference tref)
 			std::cerr << "here\n";
 
 			table->attach(*_trig_box,  col, col+1, 0, 1, Gtk::FILL|Gtk::EXPAND, Gtk::FILL|Gtk::EXPAND );  col++;
-			table->attach(_midi_editor->viewport(),   col, col+1, 0, 1, Gtk::FILL|Gtk::EXPAND, Gtk::FILL|Gtk::EXPAND );  col++;
+			table->attach(_midi_editor->toolbox(),   col, col+1, 0, 1, Gtk::FILL|Gtk::EXPAND, Gtk::FILL|Gtk::EXPAND );  col++;
 		}
 	}
 

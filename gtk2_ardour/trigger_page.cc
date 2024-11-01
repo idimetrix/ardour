@@ -419,7 +419,7 @@ TriggerPage::rec_enable_changed (Trigger const * trigger)
 	_slot_prop_box.hide ();
 	_audio_trig_box.hide ();
 	_midi_trig_box.hide ();
-	_midi_editor->viewport().hide ();
+	_midi_editor->toolbox().hide ();
 
 	_parameter_box.hide ();
 
@@ -441,7 +441,7 @@ TriggerPage::rec_enable_changed (Trigger const * trigger)
 		_midi_trig_box.show ();
 
 		_midi_editor->set (ref);
-		_midi_editor->viewport().show ();
+		_midi_editor->toolbox().show ();
 	}
 
 	_parameter_box.show ();
@@ -457,7 +457,7 @@ TriggerPage::selection_changed ()
 	_slot_prop_box.hide ();
 	_audio_trig_box.hide ();
 	_midi_trig_box.hide ();
-	_midi_editor->viewport().hide ();
+	_midi_editor->toolbox().hide ();
 
 	_parameter_box.hide ();
 
@@ -481,7 +481,7 @@ TriggerPage::selection_changed ()
 			_midi_trig_box.show ();
 
 			_midi_editor->set (ref);
-			_midi_editor->viewport().show ();
+			_midi_editor->toolbox().show ();
 		}
 
 		_parameter_box.show ();
