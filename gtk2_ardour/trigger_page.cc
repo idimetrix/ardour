@@ -66,7 +66,7 @@ using namespace Gtk;
 using namespace std;
 
 TriggerPage::TriggerPage ()
-	: Tabbable (_content_vbox, _("Cues"), X_("trigger"))
+	: Tabbable (_content, _("Cues"), X_("trigger"))
 	, _cue_area_frame (0.5, 0, 1.0, 0)
 	, _cue_box (16, 16 * TriggerBox::default_triggers_per_box)
 	, _master_widget (16, 16)
@@ -76,6 +76,8 @@ TriggerPage::TriggerPage ()
 {
 	load_bindings ();
 	register_actions ();
+
+	_content.pack_start (_content_vbox, true, true);
 
 	_transport_bar = manage(new TransportBar());
 	_transport_bar->show();
@@ -157,10 +159,9 @@ TriggerPage::TriggerPage ()
 
 	/* Top-level Layout */
 	_content_transport_ebox.add (*_transport_bar);
-	_content_innermost_ebox.add (_strip_group_box);
+	_content_innermost_hbox.add (_strip_group_box);
 	_content_list_ebox.add (_sidebar_notebook);
-	_content_props_ebox.add (_parameter_box);
-	_content_vbox.show ();
+	_content_props_hbox.pack_start (_parameter_box, true, true);
 
 	/* Show all */
 	_strip_group_box.show ();
@@ -172,7 +173,7 @@ TriggerPage::TriggerPage ()
 	_sidebar_notebook.show_all ();
 
 	/* setup keybidings */
-	_content_vbox.set_data ("ardour-bindings", bindings);
+	_content.set_data ("ardour-bindings", bindings);
 
 	/* subscribe to signals */
 	Config->ParameterChanged.connect (*this, invalidator (*this), std::bind (&TriggerPage::parameter_changed, this, _1), gui_context ());
@@ -836,7 +837,7 @@ TriggerPage::stop_updating ()
 void
 TriggerPage::fast_update_strips ()
 {
-	if (_content_vbox.get_mapped () && _session) {
+	if (_content.get_mapped () && _session) {
 		for (list<TriggerStrip*>::iterator i = _strips.begin (); i != _strips.end (); ++i) {
 			(*i)->fast_update ();
 		}

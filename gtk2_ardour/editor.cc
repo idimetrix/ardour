@@ -230,7 +230,7 @@ static const gchar *_rb_opt_strings[] = {
 #endif
 
 Editor::Editor ()
-	: PublicEditor (_content_vbox)
+	: PublicEditor (_content)
 	, editor_mixer_strip_width (Wide)
 	, constructed (false)
 	, _properties_box (0)
@@ -504,6 +504,8 @@ Editor::Editor ()
 
 	CairoWidget::set_focus_handler (sigc::mem_fun (ARDOUR_UI::instance(), &ARDOUR_UI::reset_focus));
 
+	_content.pack_start (_content_vbox, true, true);
+
 	_transport_bar = manage(new TransportBar());
 	_transport_bar->show();
 
@@ -694,12 +696,11 @@ Editor::Editor ()
 	_content_transport_ebox.add (*_transport_bar);
 	_content_list_ebox.add (_editor_list_vbox);
 	_content_toolbar_ebox.add (global_vpacker);
-	_content_innermost_ebox.add (editor_summary_pane);
+	_content_innermost_hbox.add (editor_summary_pane);
 
 	/* need to show the "contents" widget so that notebook will show if tab is switched to
 	 */
 
-	_content_hbox.show ();
 	ebox_hpacker.show();
 	global_vpacker.show();
 
@@ -5506,7 +5507,7 @@ Editor::session_going_away ()
 
 	if (current_mixer_strip) {
 		if (current_mixer_strip->get_parent() != 0) {
-			_content_strip_ebox.remove (*current_mixer_strip);
+			_content_strip_ebox.remove ();
 		}
 		delete current_mixer_strip;
 		current_mixer_strip = 0;

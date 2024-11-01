@@ -765,7 +765,7 @@ void
 Editor::load_bindings ()
 {
 	bindings = Bindings::get_bindings (editor_name());
-	_content_vbox.set_data ("ardour-bindings", bindings);
+	_content.set_data ("ardour-bindings", bindings);
 
 	/* This set of bindings may expand in the future to include things
 	 * other than MIDI editing, but for now this is all we've got as far as

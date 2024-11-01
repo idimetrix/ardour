@@ -71,7 +71,7 @@ Tabbable::Tabbable (Gtk::Widget& w, const string& visible_name, string const & n
 	_content_hbox.pack_start(_content_midlevel_vbox, true, true);
 
 	_content_midlevel_vbox.pack_start(_content_list_pane, true, true);
-	_content_midlevel_vbox.pack_start(_content_props_ebox, false, false);
+	_content_midlevel_vbox.pack_start(_content_props_hbox, true, true);
 
 	_content_list_pane.add(_content_inner_vbox);
 	_content_list_pane.add(_content_list_vbox);
@@ -80,7 +80,7 @@ Tabbable::Tabbable (Gtk::Widget& w, const string& visible_name, string const & n
 	_content_list_vbox.pack_start(_content_list_ebox, true, true);
 
 	_content_inner_vbox.pack_start(_content_toolbar_ebox, false, false);
-	_content_inner_vbox.pack_start(_content_innermost_ebox, true, true);
+	_content_inner_vbox.pack_start(_content_innermost_hbox, true, true);
 
 	_content_list_pane.set_child_minsize (_content_list_ebox, 160); /* rough guess at width of notebook tabs */
 	_content_list_pane.set_check_divider_position (true);
@@ -497,9 +497,9 @@ void
 Tabbable::showhide_btm_props (bool yn)
 {
 	if (yn) {
-		_content_props_ebox.show ();
+		_content_props_hbox.show ();
 	} else {
-		_content_props_ebox.hide ();
+		_content_props_hbox.hide ();
 	}
 }
 

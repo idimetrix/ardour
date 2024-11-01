@@ -133,7 +133,7 @@ Mixer_UI::instance ()
 }
 
 Mixer_UI::Mixer_UI ()
-	: Tabbable (_content_vbox, _("Mixer"), X_("mixer"))
+	: Tabbable (_content, _("Mixer"), X_("mixer"))
 	, plugin_search_clear_button (X_("Clear"))
 	, _mixer_scene_release (0)
 	, no_track_list_redisplay (false)
@@ -155,6 +155,7 @@ Mixer_UI::Mixer_UI ()
 	, _strip_selection_change_without_scroll (false)
 	, _selection (*this, *this)
 {
+	_content.pack_start (_content_vbox, true, true);
 
 	plugin_list_mode_strings = I18N (_plugin_list_mode_strings);
 
@@ -163,7 +164,7 @@ Mixer_UI::Mixer_UI ()
 	Glib::RefPtr<ToggleAction> fb_act = ActionManager::get_toggle_action ("Mixer", "ToggleFoldbackStrip");
 	fb_act->set_sensitive (false);
 
-	_content_vbox.set_data ("ardour-bindings", bindings);
+	_content.set_data ("ardour-bindings", bindings);
 
 	_transport_bar = manage(new TransportBar());
 	_transport_bar->show();
@@ -393,12 +394,11 @@ Mixer_UI::Mixer_UI ()
 
 	_content_transport_ebox.add (*_transport_bar);
 	_content_list_ebox.add (list_vpacker);
-	_content_innermost_ebox.add (global_hpacker);
+	_content_innermost_hbox.add (global_hpacker);
 
 	update_title ();
 
-	_content_vbox.show ();
-	_content_vbox.set_name ("MixerWindow");
+	_content.set_name ("MixerWindow");
 
 	global_hpacker.show();
 	scroller.show();
@@ -1485,7 +1485,7 @@ Mixer_UI::stop_updating ()
 void
 Mixer_UI::fast_update_strips ()
 {
-	if (!UIConfiguration::instance().get_no_strobe() && _content_vbox.get_mapped () && _session) {
+	if (!UIConfiguration::instance().get_no_strobe() && _content.get_mapped () && _session) {
 		for (auto & s : strips) {
 			s->fast_update ();
 		}

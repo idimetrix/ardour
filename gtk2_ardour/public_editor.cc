@@ -33,7 +33,7 @@ ARDOUR::DataType PublicEditor::pbdid_dragged_dt = ARDOUR::DataType::NIL;
 
 PublicEditor::PublicEditor (Gtk::Widget& content)
 	: EditingContext (X_("Editor"))
-	, Tabbable (_content_vbox, _("Editor"), X_("editor"))
+	, Tabbable (content, _("Editor"), X_("editor"))
 {
 	_suspend_route_redisplay_counter.store (0);
 }

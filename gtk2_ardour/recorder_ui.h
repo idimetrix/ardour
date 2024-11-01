@@ -128,6 +128,8 @@ private:
 
 	static int calc_columns (int child_width, int parent_width);
 
+	Gtk::HBox        _content;
+
 	Gtkmm2ext::Bindings*  bindings;
 	Gtk::HBox            _toolbar;
 	Gtk::Table           _button_table;
