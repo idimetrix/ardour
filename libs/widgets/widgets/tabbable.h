@@ -113,15 +113,15 @@ protected:
 		Gtk::HBox           _content_hbox;
 			Gtk::EventBox       _content_strip_ebox;                 /* a placeholder for the mixer strip, if you want one */
 			Gtk::VBox           _content_midlevel_vbox;
-				Gtk::EventBox        _content_props_ebox;            /* a placeholder for the property box, if you want one */
+				Gtk::HBox        _content_props_hbox;                /* a placeholder for the property box, if you want one */
 				ArdourWidgets::HPane _content_list_pane;
 					Gtk::VBox            _content_list_vbox;
 						Gtk::EventBox       _content_list_ebox;      /* a placeholder for the sidebar list, if you want one */
 					Gtk::VBox           _content_inner_vbox;
 						Gtk::EventBox   _content_toolbar_ebox;       /* a placeholder for the content-specific toolbar, if you want one */
-						Gtk::HBox       _content_innermost_ebox;     /* a placeholder for the innermost content (recorder, cues, editor, mixer) */
+						Gtk::HBox       _content_innermost_hbox;     /* a placeholder for the innermost content (recorder, cues, editor, mixer) */
 
-	Gtk::Widget&   _contents;  //for most Tabbables this will be _content_vbox;  but rc_options, for example, does something different.
+	Gtk::Widget&   _contents;  //for most Tabbables this will hold _content_vbox;  but rc_options, for example, does something different.
 
 	/* visibility controls */
 	ArdourWidgets::ArdourButton _strip_attachment_button;
