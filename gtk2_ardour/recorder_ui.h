@@ -99,7 +99,6 @@ private:
 	void tra_name_edit (TrackRecordAxis*, bool);
 	void update_rec_table_layout ();
 	void update_spacer_width (Gtk::Allocation&, TrackRecordAxis*);
-	void tabbed_changed (bool);
 
 	void set_connections (std::string const&);
 	void port_connected_or_disconnected (std::string, std::string);

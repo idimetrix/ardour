@@ -461,8 +461,6 @@ private:
 	void sync_treeview_favorite_ui_state (const Gtk::TreeModel::Path&, const Gtk::TreeModel::iterator&);
 	void save_favorite_ui_state (const Gtk::TreeModel::iterator& iter, const Gtk::TreeModel::Path& path);
 
-	void tabbed_changed (bool);
-
 	/// true if we are in fullscreen mode
 	bool _maximised;
 

@@ -532,8 +532,6 @@ private:
 	void color_handler ();
 	bool constructed;
 
-	void tabbed_changed (bool);
-
 	// to keep track of the playhead position for control_scroll
 	std::optional<samplepos_t> _control_scroll_target;
 

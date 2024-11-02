@@ -1008,11 +1008,6 @@ Editor::deferred_control_scroll (samplepos_t /*target*/)
 }
 
 void
-Editor::tabbed_changed (bool tabbed)
-{
-}
-
-void
 Editor::access_action (const std::string& action_group, const std::string& action_item)
 {
 	if (!_session) {

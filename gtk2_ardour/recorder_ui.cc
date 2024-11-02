@@ -353,11 +353,6 @@ RecorderUI::use_own_window (bool and_fill_it)
 	return win;
 }
 
-void
-RecorderUI::tabbed_changed (bool tabbed)
-{
-}
-
 XMLNode&
 RecorderUI::get_state () const
 {

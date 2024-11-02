@@ -356,11 +356,6 @@ TriggerPage::add_sidebar_page (string const & name, Gtk::Widget& widget)
 }
 
 void
-TriggerPage::tabbed_changed (bool tabbed)
-{
-}
-
-void
 TriggerPage::initial_track_display ()
 {
 	std::shared_ptr<RouteList> r = _session->get_tracks ();

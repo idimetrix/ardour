@@ -85,8 +85,6 @@ private:
 
 	void add_sidebar_page (std::string const&, Gtk::Widget&);
 
-	void tabbed_changed (bool);
-
 	bool strip_button_release_event (GdkEventButton*, TriggerStrip*);
 	bool no_strip_button_event (GdkEventButton*);
 	bool no_strip_drag_motion (Glib::RefPtr<Gdk::DragContext> const&, int, int, guint);
