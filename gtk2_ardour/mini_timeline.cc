@@ -250,6 +250,11 @@ MiniTimeline::calculate_time_width ()
 void
 MiniTimeline::calculate_time_spacing ()
 {
+	if (!is_realized () || _time_width == 0) {
+		_n_labels = 0;
+		return;
+	}
+
 	_n_labels = floor (get_width () / (_time_width * 1.15));
 
 	if (_n_labels == 0 || !_session) {
