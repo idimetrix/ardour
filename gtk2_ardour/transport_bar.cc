@@ -801,8 +801,8 @@ TransportBar::bind_lua_action_script (GdkEventButton*ev, int i)
 	if (Gtkmm2ext::Keyboard::modifier_state_equals (ev->state, Gtkmm2ext::Keyboard::TertiaryModifier)) {
 		li->remove_lua_action (i);
 	} else {
-		Glib::RefPtr<Gdk::Window> win (get_window());
-//		li->interactive_add (*win.get(), LuaScriptInfo::EditorAction, i);  ??TODO
+		Gtk::Window *win = dynamic_cast<Gtk::Window*> (get_toplevel());
+		li->interactive_add (*win, LuaScriptInfo::EditorAction, i);
 	}
 	return true;
 }
